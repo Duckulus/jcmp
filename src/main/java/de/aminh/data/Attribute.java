@@ -1,4 +1,4 @@
-package de.aminh.data.tpch;
+package de.aminh.data;
 
 public record Attribute(String name, DataType type) {
 

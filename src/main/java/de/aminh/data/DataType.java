@@ -1,8 +1,8 @@
-package de.aminh.data.tpch;
+package de.aminh.data;
 
-import de.aminh.data.tpch.Column.DoubleColumn;
-import de.aminh.data.tpch.Column.IntColumn;
-import de.aminh.data.tpch.Column.StringColumn;
+import de.aminh.data.Column.DoubleColumn;
+import de.aminh.data.Column.IntColumn;
+import de.aminh.data.Column.StringColumn;
 
 public enum DataType {
   INT,

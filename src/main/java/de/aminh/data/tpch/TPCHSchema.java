@@ -1,8 +1,11 @@
 package de.aminh.data.tpch;
 
+import de.aminh.data.Attribute;
+import de.aminh.data.DataType;
+
 import java.util.List;
 
-public enum TableSchema {
+public enum TPCHSchema {
   CUSTOMER("customer", List.of(
           new Attribute("c_custkey", DataType.INT),
           new Attribute("c_name", DataType.STRING),
@@ -17,7 +20,7 @@ public enum TableSchema {
   private final String tableName;
   private final List<Attribute> attributes;
 
-  TableSchema(String tableName, List<Attribute> attributes) {
+  TPCHSchema(String tableName, List<Attribute> attributes) {
     this.tableName = tableName;
     this.attributes = attributes;
   }

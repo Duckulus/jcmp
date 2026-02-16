@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     implementation("com.google.guava:guava:33.5.0-jre")
+    implementation("org.apache.commons:commons-lang3:3.20.0")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

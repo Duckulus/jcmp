@@ -1,20 +1,27 @@
 package de.aminh.data.tpch;
 
+import de.aminh.data.Attribute;
+import de.aminh.data.Column;
+import de.aminh.data.Table;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-public class DataLoader {
+public class TPCHDataLoader {
 
-  public static TPCHData loadData() {
-    TPCHData data = new TPCHData();
-    for (TableSchema schema : TableSchema.values()) {
-      readTable(schema, data);
+  private final Map<String, Column> allColumns = new HashMap<>();
+
+  public Table loadData() {
+    for (TPCHSchema schema : TPCHSchema.values()) {
+      readTable(schema);
     }
-    return data;
+    return new TPCHTable(allColumns);
   }
 
-  private static void readTable(TableSchema schema, TPCHData data) {
+  private void readTable(TPCHSchema schema) {
     String path = getFilePath(schema);
     int nLines= countLines(path);
 
@@ -23,7 +30,7 @@ public class DataLoader {
       Attribute attribute = schema.getAttributes().get(i);
       Column col = attribute.type().createColumn(nLines);
       columns[i] = col;
-      data.addColumn(attribute.name(), col);
+      allColumns.put(attribute.name(), col);
     }
 
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path))) {
@@ -32,7 +39,7 @@ public class DataLoader {
       while ((line = bufferedReader.readLine()) != null) {
         String[] split = line.split("\\|");
         for (int i = 0; i < columns.length; i++) {
-          columns[i].parseAndAdd(currentRow, split[i]);
+          columns[i].parseAndSetValue(currentRow, split[i]);
         }
         currentRow++;
       }
@@ -42,7 +49,7 @@ public class DataLoader {
     }
   }
 
-  private static int countLines(String path) {
+  private int countLines(String path) {
     try (InputStream is = new BufferedInputStream(Files.newInputStream(Path.of(path)))) {
       byte[] c = new byte[1024 * 32];
       int count = 0;
@@ -63,7 +70,7 @@ public class DataLoader {
     }
   }
 
-  private static String getFilePath(TableSchema schema) {
+  private static String getFilePath(TPCHSchema schema) {
     return "./data/tpch/" + schema.getTableName() + ".tbl";
   }
 
