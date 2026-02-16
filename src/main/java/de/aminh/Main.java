@@ -1,7 +1,10 @@
 package de.aminh;
 
+import de.aminh.data.tpch.DataLoader;
+import de.aminh.data.tpch.TPCHData;
+
 public class Main {
   static void main() {
-   IO.println("Hello, World!");
+    TPCHData data = DataLoader.loadData();
   }
 }
