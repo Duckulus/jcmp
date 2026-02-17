@@ -1,16 +1,18 @@
-package de.aminh.plan.nodes;
+package de.aminh.execution.impl;
 
 import de.aminh.data.Attribute;
 import de.aminh.data.Column;
+import de.aminh.data.RecordBatch;
+import de.aminh.execution.VectorizedExecutor;
 import de.aminh.plan.Expression;
 import de.aminh.plan.PlanNode;
-import de.aminh.plan.RecordBatch;
 
-public record ProjectionNode(Expression[] expressions, PlanNode child) implements PlanNode {
+public record ProjectionExecutor(PlanNode.ProjectionNode planNode,
+                                 VectorizedExecutor child) implements VectorizedExecutor {
 
   @Override
-  public void open() {
-    child.open();
+  public void init() {
+    child.init();
   }
 
   @Override
@@ -20,6 +22,7 @@ public record ProjectionNode(Expression[] expressions, PlanNode child) implement
       return null;
     }
 
+    Expression[] expressions = planNode().expressions();
     Attribute[] outputAttributes = new Attribute[expressions.length];
     Column[] outputColumns = new Column[expressions.length];
     for (int i = 0; i < expressions.length; i++) {
@@ -29,9 +32,5 @@ public record ProjectionNode(Expression[] expressions, PlanNode child) implement
     return new RecordBatch(batch.size(), outputAttributes, outputColumns);
   }
 
-  @Override
-  public void close() {
-    child.close();
-  }
 
 }

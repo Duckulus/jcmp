@@ -1,30 +1,31 @@
-package de.aminh.plan.nodes;
+package de.aminh.execution.impl;
 
 import de.aminh.data.Column;
-import de.aminh.plan.PlanNode;
-import de.aminh.plan.RecordBatch;
+import de.aminh.data.RecordBatch;
+import de.aminh.execution.VectorizedExecutor;
+import de.aminh.plan.PlanNode.LimitNode;
 
-public class LimitNode implements PlanNode {
+public class LimitExecutor implements VectorizedExecutor {
 
-  private final PlanNode child;
-  private final int limit;
+  private final LimitNode planNode;
+  private final VectorizedExecutor child;
 
   private int emitted = 0;
   private boolean done = false;
 
-  public LimitNode(PlanNode child, int limit) {
+  public LimitExecutor(LimitNode planNode, VectorizedExecutor child) {
+    this.planNode = planNode;
     this.child = child;
-    this.limit = limit;
   }
 
   @Override
-  public void open() {
-   child.open();
+  public void init() {
+    child.init();
   }
 
   @Override
   public RecordBatch next() {
-    if (done || emitted >= limit) {
+    if (done || emitted >= planNode.limit()) {
       return null;
     }
     RecordBatch batch = child.next();
@@ -33,7 +34,7 @@ public class LimitNode implements PlanNode {
       return null;
     }
 
-    int rowsLeft = limit - emitted;
+    int rowsLeft = planNode.limit() - emitted;
     if (rowsLeft < batch.size()) {
       Column[] outputColumns = new Column[batch.columns().length];
       for (int i = 0; i < batch.columns().length; i++) {
@@ -48,8 +49,4 @@ public class LimitNode implements PlanNode {
 
   }
 
-  @Override
-  public void close() {
-    child.close();
-  }
 }

@@ -1,17 +1,15 @@
 package de.aminh.plan;
 
-import de.aminh.data.Attribute;
-import de.aminh.data.Column;
+import de.aminh.data.*;
 import de.aminh.data.Column.IntColumn;
-import de.aminh.data.DataType;
-import de.aminh.data.Table;
 import de.aminh.exceptions.TypeException;
+import de.aminh.execution.VectorizedExecutor;
 import de.aminh.plan.Expression.LiteralInt;
 import de.aminh.plan.Expression.LiteralString;
 import de.aminh.plan.Expression.Sum;
-import de.aminh.plan.nodes.ProjectionNode;
-import de.aminh.plan.nodes.SingleRowNode;
-import de.aminh.plan.nodes.TableScanNode;
+import de.aminh.plan.PlanNode.ProjectionNode;
+import de.aminh.plan.PlanNode.SingleRowNode;
+import de.aminh.plan.PlanNode.TableScanNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,46 +22,53 @@ public class VectorizedExecutionTest {
   @Test
   void integerLiteral() {
     PlanNode query = new ProjectionNode(
-            new Expression[]{new LiteralInt(42), new LiteralInt(43)},
-            new SingleRowNode()
+            new SingleRowNode(),
+            new Expression[]{new LiteralInt(42), new LiteralInt(43)}
     );
 
-    RecordBatch batch = query.next();
+    VectorizedExecutor executor = Planner.plan(query);
+    executor.init();
+
+    RecordBatch batch = executor.next();
     assertNotNull(batch);
     assertEquals(1, batch.size());
     assertEquals(2, batch.attributes().length);
     assertEquals(42, batch.columns()[0].getValue(0));
     assertEquals(43, batch.columns()[1].getValue(0));
-    assertNull(query.next());
+    assertNull(executor.next());
   }
 
   @Test
   void integerSum() {
     PlanNode query = new ProjectionNode(
+            new SingleRowNode(),
             new Expression[]{new Sum(
                     new LiteralInt(2), new LiteralInt(4)
-            )},
-            new SingleRowNode()
+            )}
     );
 
-    RecordBatch batch = query.next();
+    VectorizedExecutor executor = Planner.plan(query);
+    executor.init();
+    RecordBatch batch = executor.next();
     assertNotNull(batch);
     assertEquals(1, batch.size());
     assertEquals(1, batch.attributes().length);
     assertEquals(6, batch.columns()[0].getValue(0));
-    assertNull(query.next());
+    assertNull(executor.next());
   }
 
   @Test
   void invalidSum() {
     PlanNode query = new ProjectionNode(
+            new SingleRowNode(),
             new Expression[]{new Sum(
                     new LiteralInt(2), new LiteralString("hi")
-            )},
-            new SingleRowNode()
+            )}
     );
 
-    assertThrows(TypeException.class, query::next);
+    VectorizedExecutor executor = Planner.plan(query);
+    executor.init();
+    assertThrows(TypeException.class, executor::next);
   }
 
   @Test
@@ -87,23 +92,27 @@ public class VectorizedExecutionTest {
         return attributes.get(name);
       }
     };
-    PlanNode query = new TableScanNode(testTable, List.of("a"), 5);
-    RecordBatch batch = query.next();
+    PlanNode query1 = new TableScanNode(testTable, List.of("a"), 5);
+    VectorizedExecutor executor1 = Planner.plan(query1);
+    executor1.init();
+    RecordBatch batch = executor1.next();
     assertNotNull(batch);
     assertEquals(5, batch.size());
     assertEquals(1, batch.attributes().length);
-    assertNull(query.next());
+    assertNull(executor1.next());
 
     PlanNode query2 = new TableScanNode(testTable, List.of("a"), 3);
-    RecordBatch batch2 = query2.next();
+    VectorizedExecutor executor2 = Planner.plan(query2);
+    executor2.init();
+    RecordBatch batch2 = executor2.next();
     assertNotNull(batch2);
     assertEquals(3, batch2.size());
     assertEquals(1, batch2.attributes().length);
-    batch2 = query2.next();
+    batch2 = executor2.next();
     assertNotNull(batch2);
     assertEquals(2, batch2.size());
     assertEquals(1, batch2.attributes().length);
-    assertNull(query2.next());
+    assertNull(executor2.next());
   }
 
 }

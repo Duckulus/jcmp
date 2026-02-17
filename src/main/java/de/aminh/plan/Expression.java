@@ -4,6 +4,7 @@ import de.aminh.data.Column;
 import de.aminh.data.Column.IntColumn;
 import de.aminh.data.Column.StringColumn;
 import de.aminh.data.DataType;
+import de.aminh.data.RecordBatch;
 import de.aminh.exceptions.ColumnNotFoundException;
 import de.aminh.exceptions.TypeException;
 import de.aminh.util.ArrayUtil;

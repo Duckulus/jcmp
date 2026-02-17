@@ -1,39 +1,39 @@
-package de.aminh.plan.nodes;
+package de.aminh.execution.impl;
 
-import de.aminh.Configuration;
 import de.aminh.data.Attribute;
 import de.aminh.data.Column;
+import de.aminh.data.RecordBatch;
 import de.aminh.data.Table;
 import de.aminh.exceptions.ColumnNotFoundException;
-import de.aminh.plan.PlanNode;
-import de.aminh.plan.RecordBatch;
+import de.aminh.execution.VectorizedExecutor;
+import de.aminh.plan.PlanNode.TableScanNode;
 
 import java.util.List;
 
-public class TableScanNode implements PlanNode {
+public class TableScanExecutor implements VectorizedExecutor {
 
-  private final List<String> columnNames;
-  private final int batchSize;
+  private final TableScanNode planNode;
 
-  private final Attribute[] inputAttributes;
-  private final Column[] inputColumns;
+  private Attribute[] inputAttributes;
+  private Column[] inputColumns;
 
   private int cursor = 0;
-  private final int totalRows;
+  private int totalRows;
 
-  public TableScanNode(Table table, List<String> columnNames) {
-    this(table, columnNames, Configuration.BATCH_SIZE);
+  public TableScanExecutor(TableScanNode planNode) {
+    this.planNode = planNode;
   }
 
-  public TableScanNode(Table table, List<String> columnNames, int batchSize) {
-    if (columnNames.isEmpty()) {
+  @Override
+  public void init() {
+    if (planNode.columnNames().isEmpty()) {
       throw new IllegalArgumentException("Table scan needs at least 1 column");
     }
-    this.columnNames = columnNames;
-    this.batchSize = batchSize;
 
+    List<String> columnNames = planNode.columnNames();
     int numCols = columnNames.size();
 
+    Table table = planNode.table();
     // We are assuming that all the provided columns have the same length since they are part of the same logical table
     this.totalRows = table.getColumn(columnNames.getFirst()).length();
 
@@ -53,16 +53,12 @@ public class TableScanNode implements PlanNode {
   }
 
   @Override
-  public void open() {
-
-  }
-
-  @Override
   public RecordBatch next() {
     if (cursor >= totalRows) {
       return null;
     }
-    int rowCount = Math.min(batchSize, totalRows - cursor);
+    int rowCount = Math.min(planNode.batchSize(), totalRows - cursor);
+    List<String> columnNames = planNode.columnNames();
     Column[] outputColumns = new Column[columnNames.size()];
     for (int i = 0; i < columnNames.size(); i++) {
       outputColumns[i] = inputColumns[i].copySlice(cursor, rowCount);
@@ -71,8 +67,4 @@ public class TableScanNode implements PlanNode {
     return new RecordBatch(rowCount, inputAttributes, outputColumns);
   }
 
-  @Override
-  public void close() {
-
-  }
 }

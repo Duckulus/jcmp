@@ -1,7 +1,4 @@
-package de.aminh.plan;
-
-import de.aminh.data.Attribute;
-import de.aminh.data.Column;
+package de.aminh.data;
 
 public record RecordBatch(int size, Attribute[] attributes, Column[] columns) {
 

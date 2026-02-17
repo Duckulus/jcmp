@@ -1,11 +1,31 @@
 package de.aminh.plan;
 
-public interface PlanNode {
+import de.aminh.Configuration;
+import de.aminh.data.Table;
 
-  void open();
+import java.util.List;
 
-  RecordBatch next();
+public sealed interface PlanNode {
 
-  void close();
+  record LimitNode(PlanNode child, int limit) implements PlanNode {
+
+  }
+
+  record ProjectionNode(PlanNode child, Expression[] expressions) implements PlanNode {
+
+  }
+
+  /**
+   * This node is used in queries that don't have a FROM clause, e.g. SELECT 1;
+   */
+  record SingleRowNode() implements PlanNode {
+
+  }
+
+  record TableScanNode(Table table, List<String> columnNames, int batchSize) implements PlanNode {
+    public TableScanNode(Table table, List<String> columnNames) {
+      this(table, columnNames, Configuration.BATCH_SIZE);
+    }
+  }
 
 }

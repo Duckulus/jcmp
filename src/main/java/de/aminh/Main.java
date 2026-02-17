@@ -2,16 +2,18 @@ package de.aminh;
 
 import de.aminh.data.Attribute;
 import de.aminh.data.DataType;
+import de.aminh.data.RecordBatch;
 import de.aminh.data.Table;
 import de.aminh.data.tpch.TPCHDataLoader;
+import de.aminh.execution.VectorizedExecutor;
 import de.aminh.plan.Expression;
 import de.aminh.plan.Expression.ColumnValue;
 import de.aminh.plan.Expression.Sum;
 import de.aminh.plan.PlanNode;
-import de.aminh.plan.RecordBatch;
-import de.aminh.plan.nodes.LimitNode;
-import de.aminh.plan.nodes.ProjectionNode;
-import de.aminh.plan.nodes.TableScanNode;
+import de.aminh.plan.PlanNode.LimitNode;
+import de.aminh.plan.PlanNode.ProjectionNode;
+import de.aminh.plan.PlanNode.TableScanNode;
+import de.aminh.plan.Planner;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,13 +26,13 @@ public class Main {
     runQuery(
             new LimitNode(
                     new ProjectionNode(
+                            new TableScanNode(table, List.of("c_custkey")),
                             new Expression[]{
                                     new Sum(
                                             new ColumnValue("c_custkey", DataType.INT),
                                             new Expression.LiteralInt(1)
                                     )
-                            },
-                            new TableScanNode(table, List.of("c_custkey"))
+                            }
                     ),
                     5
 
@@ -38,9 +40,11 @@ public class Main {
   }
 
   static void runQuery(PlanNode planNode) {
+    VectorizedExecutor executor = Planner.plan(planNode);
+    executor.init();
     RecordBatch batch;
     boolean printHeader = true;
-    while ((batch = planNode.next()) != null) {
+    while ((batch = executor.next()) != null) {
       if (printHeader) {
         IO.println(Arrays.stream(batch.attributes()).map(Attribute::name).collect(Collectors.joining(" | ")));
         printHeader = false;
