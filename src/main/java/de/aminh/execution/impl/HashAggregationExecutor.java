@@ -11,7 +11,6 @@ import de.aminh.execution.VectorizedExecutor;
 import de.aminh.plan.Aggregate;
 import de.aminh.plan.Expression;
 import de.aminh.plan.PlanNode.AggregationNode;
-import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,17 +31,27 @@ public class HashAggregationExecutor implements VectorizedExecutor {
 
     @Override
     public int hashCode() {
-      int hashCode = values[0].hashCode();
-      for (int i = 1; i < values.length; i++) {
-        hashCode ^= values[i].hashCode();
-      }
-      return hashCode;
+      return Arrays.hashCode(values);
     }
 
     @Override
     public boolean equals(Object obj) {
-      // optimistic comparison for performance
-      return Arrays.equals(values, ((CompoundKey) obj).values);
+      if (obj instanceof CompoundKey other) {
+        return Arrays.equals(this.values, other.values);
+      }
+      return false;
+    }
+  }
+
+  public static class AggregationState {
+    public int[] counts;
+    public int[] sumsInt;
+    public double[] sumsDouble;
+
+    public AggregationState(int aggregateCount) {
+      counts = new int[aggregateCount];
+      sumsInt = new int[aggregateCount];
+      sumsDouble = new double[aggregateCount];
     }
   }
 
@@ -66,7 +75,7 @@ public class HashAggregationExecutor implements VectorizedExecutor {
     if (done) {
       return null;
     }
-    Map<CompoundKey, Object[]> aggregationMap = new HashMap<>();
+    Map<CompoundKey, AggregationState> aggregationMap = new HashMap<>();
 
     int aggregateCount = planNode.aggregates().size();
     int keyColumnCount = planNode.keys().size();
@@ -102,7 +111,6 @@ public class HashAggregationExecutor implements VectorizedExecutor {
       }
 
       CompoundKey[] compoundKeys = new CompoundKey[batch.size()];
-      // TODO rewrite this column-wise?
       for (int i = 0; i < batch.size(); i++) {
         Object[] keyValues = new Object[keyColumnCount];
         for (int j = 0; j < keyColumnCount; j++) {
@@ -111,40 +119,36 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         compoundKeys[i] = new CompoundKey(keyValues);
       }
 
+      Column[] evaluatedAggregates = new Column[aggregateCount];
+      for(int i = 0; i < aggregateCount; i++) {
+        Expression expr = planNode.aggregates().get(i).expressionOrNull();
+        if (expr != null) {
+          evaluatedAggregates[i] = expr.eval(batch);
+        }
+      }
 
       for (int i = 0; i < compoundKeys.length; i++) {
         CompoundKey compoundKey = compoundKeys[i];
-        Object[] state = aggregationMap.computeIfAbsent(compoundKey, _ -> new Object[aggregateCount]);
+        AggregationState state = aggregationMap.computeIfAbsent(compoundKey, _ -> new AggregationState(aggregateCount));
         for (int j = 0; j < aggregateCount; j++) {
           switch (planNode.aggregates().get(j)) {
-            case Aggregate.CountStar _ -> {
-              state[j] = (state[j] == null ? 0 : (int) state[j]) + 1;
-            }
+            case Aggregate.CountStar _ -> state.counts[j] += 1;
             case Aggregate.Avg(Expression expr) -> {
-              MutablePair<Double, Integer> pair;
-              if (state[j] == null) {
-                pair = new MutablePair<>(0.0, 0);
-                state[j] = pair;
-              } else {
-                pair = (MutablePair<Double, Integer>) state[j];
-              }
               if (expr.type() == DataType.INT) {
-                int elementValue = ((IntColumn) expr.evalSlice(batch, i, i + 1)).values()[0];
-                pair.setLeft(pair.getLeft() + elementValue);
-                pair.setRight(pair.getRight() + 1);
+                state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
+                state.counts[j] += 1;
               } else if (expr.type() == DataType.DOUBLE) {
-                double elementValue = ((DoubleColumn) expr.evalSlice(batch, i, i + 1)).values()[0];
-                pair.setLeft(pair.getLeft() + elementValue);
-                pair.setRight(pair.getRight() + 1);
+                state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
+                state.counts[j] += 1;
               } else {
                 throw new IllegalStateException();
               }
             }
             case Aggregate.Sum(Expression expr) -> {
               if (expr.type() == DataType.INT) {
-                state[j] = (state[j] == null ? 0 : (int) state[j]) + ((IntColumn) expr.evalSlice(batch, i, i + 1)).values()[0];
+                state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
               } else if (expr.type() == DataType.DOUBLE) {
-                state[j] = (state[j] == null ? 0.0 : (double) state[j]) + ((DoubleColumn) expr.evalSlice(batch, i, i + 1)).values()[0];
+                state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
               } else {
                 throw new IllegalStateException();
               }
@@ -169,18 +173,8 @@ public class HashAggregationExecutor implements VectorizedExecutor {
       outputColumns[keyColumnCount + i] = aggregateType.createColumn(outputRows);
     }
 
-    for (int i = 0; i < planNode.aggregates().size(); i++) {
-      Aggregate aggregate = planNode.aggregates().get(i);
-      if (aggregate instanceof Aggregate.Avg(_)) {
-        for (Object[] state : aggregationMap.values()) {
-          MutablePair<Double, Integer> pair = (MutablePair<Double, Integer>) state[i];
-          state[i] = pair.getLeft() / pair.getRight();
-        }
-      }
-    }
-
     int i = 0;
-    for (Map.Entry<CompoundKey, Object[]> entry : aggregationMap.entrySet()) {
+    for (Map.Entry<CompoundKey, AggregationState> entry : aggregationMap.entrySet()) {
       for (int j = 0; j < keyColumnCount; j++) {
         switch (outputColumns[j]) {
           case DoubleColumn(double[] values) -> values[i] = (double) entry.getKey().values[j];
@@ -189,10 +183,13 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         }
       }
       for (int j = 0; j < aggregateCount; j++) {
+        Aggregate aggregate = planNode.aggregates().get(j);
+        DataType exprType = aggregate.expressionType();
+        Object value = aggregate.extractValue(entry.getValue(), exprType,j);
         switch (outputColumns[keyColumnCount + j]) {
-          case DoubleColumn(double[] values) -> values[i] = (double) entry.getValue()[j];
-          case IntColumn(int[] values) -> values[i] = (int) entry.getValue()[j];
-          case StringColumn(String[] values) -> values[i] = (String) entry.getValue()[j];
+          case DoubleColumn(double[] values) -> values[i] = (double) value;
+          case IntColumn(int[] values) -> values[i] = (int) value;
+          default -> throw new IllegalStateException("Invalid Column for aggregation " + outputColumns[keyColumnCount + j]);
         }
       }
       i++;

@@ -16,15 +16,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.lang.reflect.Array;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VectorizedExecutionTest {
 
-  private Table createIntTable(int[]... columnValues) {
+  private Table createTable(Object... columnValues) {
     return new Table() {
       private final Map<String, Column> columns = new HashMap<>();
       private final Map<String, Attribute> attributes = new HashMap<>();
@@ -32,8 +30,22 @@ public class VectorizedExecutionTest {
       {
         for (int i = 0; i < columnValues.length; i++) {
           String colName = String.valueOf((char) ('a' + i));
-          columns.put(colName, new IntColumn(columnValues[i]));
-          attributes.put(colName, new Attribute(colName, DataType.INT));
+          switch (columnValues[i]) {
+            case int[] intValues -> {
+              columns.put(colName, new IntColumn(intValues));
+              attributes.put(colName, new Attribute(colName, DataType.INT));
+            }
+            case double[] doubleValues -> {
+              columns.put(colName, new DoubleColumn(doubleValues));
+              attributes.put(colName, new Attribute(colName, DataType.DOUBLE));
+            }
+            case String[] stringValues -> {
+              columns.put(colName, new StringColumn(stringValues));
+              attributes.put(colName, new Attribute(colName, DataType.STRING));
+            }
+            default -> throw new IllegalArgumentException("Unexpected Type for Column " + columnValues[i]);
+          }
+
         }
       }
 
@@ -82,6 +94,36 @@ public class VectorizedExecutionTest {
       }
     }
     assertNull(executor.next());
+  }
+
+  void assertUnorderedQueryResult(PlanNode query, Object[] expectedColumns) {
+    VectorizedExecutor executor = Planner.plan(query);
+    executor.init();
+
+    Set<List<Object>> expectedRows = new HashSet<>();
+    int rowCount = Array.getLength(expectedColumns[0]);
+    for (int i = 0; i < rowCount; i++) {
+      List<Object> row = new ArrayList<>();
+      for (Object expectedColumn : expectedColumns) {
+        row.add(Array.get(expectedColumn, i));
+      }
+      expectedRows.add(row);
+    }
+
+    Set<List<Object>> actualRows = new HashSet<>();
+    RecordBatch batch;
+    while ((batch = executor.next()) != null) {
+      for (int i = 0; i < batch.size(); i++) {
+        List<Object> row = new ArrayList<>();
+        for (int j = 0; j < batch.columns().length; j++) {
+          Object value = batch.columns()[j].getValue(i);
+          row.add(value);
+        }
+        actualRows.add(row);
+      }
+    }
+
+    assertEquals(expectedRows, actualRows);
   }
 
   void assertRowCount(PlanNode query, int expectedCount) {
@@ -137,7 +179,7 @@ public class VectorizedExecutionTest {
 
   @Test
   void tableScan() {
-    Table testTable = createIntTable(new int[]{1, 2, 3, 4, 5});
+    Table testTable = createTable((Object) new int[]{1, 2, 3, 4, 5});
     PlanNode query1 = new TableScanNode(testTable, List.of("a"), 5);
     assertQueryResult(query1, new int[][]{
             {1, 2, 3, 4, 5}
@@ -161,7 +203,7 @@ public class VectorizedExecutionTest {
           "0, 0"
   })
   public void limit(int limit, int expectedRows) {
-    Table testTable = createIntTable(new int[]{1, 2, 3, 4, 5});
+    Table testTable = createTable((Object) new int[]{1, 2, 3, 4, 5});
     PlanNode query = new LimitNode(
             new TableScanNode(testTable, List.of("a")),
             limit
@@ -171,7 +213,7 @@ public class VectorizedExecutionTest {
 
   @Test
   public void selection() {
-    Table testTable = createIntTable(
+    Table testTable = createTable(
             new int[]{1, 2, 3, 4, 5},
             new int[]{10, 9, 8, 7, 6}
     );
@@ -187,9 +229,10 @@ public class VectorizedExecutionTest {
 
   @Test
   public void aggregation() {
-    Table testTable = createIntTable(
+    Table testTable = createTable(
             new int[]{1, 1, 1, 2, 2},
-            new int[]{2, 4, 6, 8, 10}
+            new int[]{2, 4, 6, 8, 10},
+            new double[]{1, 1, 2, 2, 2}
     );
     PlanNode countQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b")),
@@ -219,6 +262,32 @@ public class VectorizedExecutionTest {
     assertQueryResult(avgQuery, new Object[]{
             new int[]{1, 2},
             new double[]{(2 + 4 + 6) / 3d, (8 + 10) / 2d}
+    });
+
+    PlanNode multiAggQuery = new AggregationNode(
+            new TableScanNode(testTable, List.of("a", "b", "c")),
+            List.of(
+                    new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT)),
+                    new Aggregate.Avg(new Expression.ColumnValue("c", DataType.DOUBLE))
+            ),
+            List.of("a")
+    );
+    assertQueryResult(multiAggQuery, new Object[]{
+            new int[]{1, 2},
+            new int[]{12, 18},
+            new double[]{(1. + 1. + 2.) / 3., 4. / 2.}
+    });
+    PlanNode multiKeyQuery = new AggregationNode(
+            new TableScanNode(testTable, List.of("a", "b", "c")),
+            List.of(
+                    new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT))
+            ),
+            List.of("a", "c")
+    );
+    assertUnorderedQueryResult(multiKeyQuery, new Object[]{
+            new int[]{1, 1, 2},
+            new double[]{1, 2, 2},
+            new int[]{6, 6, 18}
     });
   }
 
