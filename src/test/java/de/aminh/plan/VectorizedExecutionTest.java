@@ -69,8 +69,8 @@ public class VectorizedExecutionTest {
       RecordBatch batch = executor.next();
       assertNotNull(batch);
 
-      assertEquals(expectedColumns.length, batch.attributes().length);
-      assertEquals(expectedColumns.length, batch.columns().length);
+      assertEquals(expectedColumns.length, batch.attributes().length, "Mismatched column count");
+      assertEquals(expectedColumns.length, batch.columns().length, "Mismatched attribute count");
 
       for (int i = 0; i < expectedColumns.length; i++) {
         Object expectedColumnValues = expectedColumns[i];
@@ -202,7 +202,7 @@ public class VectorizedExecutionTest {
           "3, 3",
           "0, 0"
   })
-  public void limit(int limit, int expectedRows) {
+  void limit(int limit, int expectedRows) {
     Table testTable = createTable((Object) new int[]{1, 2, 3, 4, 5});
     PlanNode query = new LimitNode(
             new TableScanNode(testTable, List.of("a")),
@@ -212,7 +212,7 @@ public class VectorizedExecutionTest {
   }
 
   @Test
-  public void selection() {
+  void selection() {
     Table testTable = createTable(
             new int[]{1, 2, 3, 4, 5},
             new int[]{10, 9, 8, 7, 6}
@@ -228,7 +228,7 @@ public class VectorizedExecutionTest {
   }
 
   @Test
-  public void aggregation() {
+  void aggregation() {
     Table testTable = createTable(
             new int[]{1, 1, 1, 2, 2},
             new int[]{2, 4, 6, 8, 10},
@@ -288,6 +288,20 @@ public class VectorizedExecutionTest {
             new int[]{1, 1, 2},
             new double[]{1, 2, 2},
             new int[]{6, 6, 18}
+    });
+  }
+
+  @Test
+  void stringComparison() {
+    Table testTable = createTable(
+            (Object) new String[]{"z", "a", "aa", "aab", "b", "aac", "z"}
+    );
+    PlanNode query = new SelectionNode(
+            new TableScanNode(testTable, List.of("a")),
+            new Expression.Binary(BinaryOperator.LE, new Expression.ColumnValue("a", DataType.STRING), new Expression.LiteralString("aab"))
+    );
+    assertQueryResult(query, (Object[]) new String[][]{
+            {"a", "aa", "aab"}
     });
   }
 

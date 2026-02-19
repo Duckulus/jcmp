@@ -36,6 +36,7 @@ public class TPCHDataLoader {
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path))) {
       String line;
       int currentRow = 0;
+      long start = System.currentTimeMillis();
       while ((line = bufferedReader.readLine()) != null) {
         String[] split = line.split("\\|");
         for (int i = 0; i < columns.length; i++) {
@@ -43,7 +44,7 @@ public class TPCHDataLoader {
         }
         currentRow++;
       }
-      IO.println("Finished reading %d rows of table %s".formatted(nLines, schema.getTableName()));
+      IO.println("Finished reading %d rows of table %s in %dms".formatted(nLines, schema.getTableName(), System.currentTimeMillis() - start));
     } catch (IOException e) {
       throw new RuntimeException("There was an error reading in the data", e);
     }
