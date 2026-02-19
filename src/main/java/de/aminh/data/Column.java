@@ -1,5 +1,8 @@
 package de.aminh.data;
 
+/**
+ * An in-memory representation of a Column
+ */
 public sealed interface Column {
 
   record IntColumn(int[] values) implements Column {
@@ -44,6 +47,9 @@ public sealed interface Column {
    * @param n The number of values to read. cursor + n MUST be <= the size of this column.
    */
   default Column copySlice(int cursor, int n) {
+    if (cursor == 0 && n == this.length()) {
+      return this;
+    }
     return switch (this) {
       case IntColumn(int[] values) -> {
         int[] outputValues = new int[n];
@@ -58,6 +64,43 @@ public sealed interface Column {
       case StringColumn(String[] values) -> {
         String[] outputValues = new String[n];
         System.arraycopy(values, cursor, outputValues, 0, n);
+        yield new StringColumn(outputValues);
+      }
+    };
+  }
+
+  /**
+   * Takes in a mask of 0s and 1s and copies the elements that have a 1 in the mask into a new column
+   * @param mask An int array of 0s and 1s that MUST be the same length as this column
+   * @param n MUST match the number of 1s in the mask
+   */
+  default Column copyMask(int[] mask, int n) {
+    return switch (this) {
+      case IntColumn(int[] values) -> {
+        int[] outputValues = new int[n];
+        for(int i = 0, j = 0; i < mask.length; i++) {
+          if (mask[i] == 1) {
+            outputValues[j++] = values[i];
+          }
+        }
+        yield new IntColumn(outputValues);
+      }
+      case DoubleColumn(double[] values) -> {
+        double[] outputValues = new double[n];
+        for(int i = 0, j = 0; i < mask.length; i++) {
+          if (mask[i] == 1) {
+            outputValues[j++] = values[i];
+          }
+        }
+        yield new DoubleColumn(outputValues);
+      }
+      case StringColumn(String[] values) -> {
+        String[] outputValues = new String[n];
+        for(int i = 0, j = 0; i < mask.length; i++) {
+          if (mask[i] == 1) {
+            outputValues[j++] = values[i];
+          }
+        }
         yield new StringColumn(outputValues);
       }
     };

@@ -5,9 +5,9 @@ import de.aminh.data.Column;
 import de.aminh.data.RecordBatch;
 import de.aminh.execution.VectorizedExecutor;
 import de.aminh.plan.Expression;
-import de.aminh.plan.PlanNode;
+import de.aminh.plan.PlanNode.ProjectionNode;
 
-public record ProjectionExecutor(PlanNode.ProjectionNode planNode,
+public record ProjectionExecutor(ProjectionNode planNode,
                                  VectorizedExecutor child) implements VectorizedExecutor {
 
   @Override

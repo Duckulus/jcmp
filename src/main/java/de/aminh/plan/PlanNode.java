@@ -28,4 +28,12 @@ public sealed interface PlanNode {
     }
   }
 
+  record SelectionNode(PlanNode child, Expression predicate) implements PlanNode {
+
+  }
+
+  record AggregationNode(PlanNode child, List<Aggregate> aggregates, List<String> keys) implements PlanNode {
+
+  }
+
 }

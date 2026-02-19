@@ -2,10 +2,10 @@ package de.aminh.data;
 
 public record RecordBatch(int size, Attribute[] attributes, Column[] columns) {
 
-  public static RecordBatch newBatch(int size) {
+  public static RecordBatch empty(Attribute[] attributes) {
     return new RecordBatch(
-            size,
-            new Attribute[0],
+            0,
+            attributes,
             new Column[0]
     );
   }

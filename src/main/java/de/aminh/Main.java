@@ -6,12 +6,10 @@ import de.aminh.data.RecordBatch;
 import de.aminh.data.Table;
 import de.aminh.data.tpch.TPCHDataLoader;
 import de.aminh.execution.VectorizedExecutor;
+import de.aminh.plan.Aggregate;
 import de.aminh.plan.Expression;
-import de.aminh.plan.Expression.ColumnValue;
-import de.aminh.plan.Expression.Sum;
 import de.aminh.plan.PlanNode;
-import de.aminh.plan.PlanNode.LimitNode;
-import de.aminh.plan.PlanNode.ProjectionNode;
+import de.aminh.plan.PlanNode.AggregationNode;
 import de.aminh.plan.PlanNode.TableScanNode;
 import de.aminh.plan.Planner;
 
@@ -24,19 +22,13 @@ public class Main {
     Table table = new TPCHDataLoader().loadData();
 
     runQuery(
-            new LimitNode(
-                    new ProjectionNode(
-                            new TableScanNode(table, List.of("c_custkey")),
-                            new Expression[]{
-                                    new Sum(
-                                            new ColumnValue("c_custkey", DataType.INT),
-                                            new Expression.LiteralInt(1)
-                                    )
-                            }
-                    ),
-                    5
+            new AggregationNode(
+                    new TableScanNode(table, List.of("c_nationkey", "c_custkey")),
+                    List.of(new Aggregate.Avg(new Expression.ColumnValue("c_custkey", DataType.INT))),
+                    List.of("c_nationkey")
+            )
+    );
 
-            ));
   }
 
   static void runQuery(PlanNode planNode) {

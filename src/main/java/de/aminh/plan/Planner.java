@@ -1,14 +1,8 @@
 package de.aminh.plan;
 
 import de.aminh.execution.VectorizedExecutor;
-import de.aminh.execution.impl.LimitExecutor;
-import de.aminh.execution.impl.ProjectionExecutor;
-import de.aminh.execution.impl.SingleRowExecutor;
-import de.aminh.execution.impl.TableScanExecutor;
-import de.aminh.plan.PlanNode.LimitNode;
-import de.aminh.plan.PlanNode.ProjectionNode;
-import de.aminh.plan.PlanNode.SingleRowNode;
-import de.aminh.plan.PlanNode.TableScanNode;
+import de.aminh.execution.impl.*;
+import de.aminh.plan.PlanNode.*;
 
 public class Planner {
 
@@ -30,6 +24,14 @@ public class Planner {
       }
       case TableScanNode tableScanNode -> {
         return new TableScanExecutor(tableScanNode);
+      }
+      case SelectionNode selectionNode -> {
+        VectorizedExecutor child = plan(selectionNode.child());
+        return new SelectionExecutor(selectionNode, child);
+      }
+      case AggregationNode aggregationNode -> {
+        VectorizedExecutor child = plan(aggregationNode.child());
+        return new HashAggregationExecutor(aggregationNode, child);
       }
     }
   }
