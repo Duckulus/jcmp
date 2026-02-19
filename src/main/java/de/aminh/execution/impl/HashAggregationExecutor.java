@@ -127,27 +127,33 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         }
       }
 
+      DataType[] aggregateTypes = new DataType[aggregateCount];
+      for(int i = 0; i < aggregateCount; i++) {
+        aggregateTypes[i] = planNode.aggregates().get(i).expressionType();
+      }
+
+      Aggregate[] aggregates = planNode.aggregates().toArray(new Aggregate[0]);
       for (int i = 0; i < compoundKeys.length; i++) {
         CompoundKey compoundKey = compoundKeys[i];
         AggregationState state = aggregationMap.computeIfAbsent(compoundKey, _ -> new AggregationState(aggregateCount));
         for (int j = 0; j < aggregateCount; j++) {
-          switch (planNode.aggregates().get(j)) {
+          switch (aggregates[j]) {
             case Aggregate.CountStar _ -> state.counts[j] += 1;
-            case Aggregate.Avg(Expression expr) -> {
-              if (expr.type() == DataType.INT) {
+            case Aggregate.Avg(_) -> {
+              if (aggregateTypes[j] == DataType.INT) {
                 state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
                 state.counts[j] += 1;
-              } else if (expr.type() == DataType.DOUBLE) {
+              } else if (aggregateTypes[j] == DataType.DOUBLE) {
                 state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
                 state.counts[j] += 1;
               } else {
                 throw new IllegalStateException();
               }
             }
-            case Aggregate.Sum(Expression expr) -> {
-              if (expr.type() == DataType.INT) {
+            case Aggregate.Sum(_) -> {
+              if (aggregateTypes[j] == DataType.INT) {
                 state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
-              } else if (expr.type() == DataType.DOUBLE) {
+              } else if (aggregateTypes[j] == DataType.DOUBLE) {
                 state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
               } else {
                 throw new IllegalStateException();
