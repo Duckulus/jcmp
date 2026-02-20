@@ -18,7 +18,10 @@ public sealed interface Aggregate {
 
   }
 
-  default DataType type() {
+  /**
+   * The type of the column produced by this aggregate
+   */
+  default DataType outputType() {
     return switch (this) {
       case CountStar _ -> DataType.INT;
       case Sum(Expression expr) -> {

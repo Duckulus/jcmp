@@ -4,13 +4,29 @@ import de.aminh.jcmp.data.*;
 import de.aminh.jcmp.data.Column.DoubleColumn;
 import de.aminh.jcmp.data.Column.IntColumn;
 import de.aminh.jcmp.data.Column.StringColumn;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TPCHHandwritten {
 
   public static RecordBatch q1(Table table) {
+    ArrayList<String> output0 = new ArrayList<>();
+    ArrayList<String> output1 = new ArrayList<>();
+    DoubleArrayList output2 = new DoubleArrayList();
+    DoubleArrayList output3 = new DoubleArrayList();
+    DoubleArrayList output4 = new DoubleArrayList();
+    DoubleArrayList output5 = new DoubleArrayList();
+    DoubleArrayList output6 = new DoubleArrayList();
+    DoubleArrayList output7 = new DoubleArrayList();
+    DoubleArrayList output8 = new DoubleArrayList();
+    IntArrayList output9 = new IntArrayList();
+
+    int inputRows = table.getColumn("l_returnflag").length();
+
     String[] l_returnflag = table.getStringColumnValues("l_returnflag");
     String[] l_linestatus = table.getStringColumnValues("l_linestatus");
     double[] l_quantity = table.getDoubleColumnValues("l_quantity");
@@ -31,7 +47,7 @@ public class TPCHHandwritten {
     }
 
     Map<CompoundKey, AggregationState> aggregationMap = new HashMap<>();
-    for (int i = 0; i < l_returnflag.length; i++) {
+    for (int i = 0; i < inputRows; i++) {
       if (l_shipdate[i].compareTo("1998-09-02") <= 0) {
         CompoundKey key = new CompoundKey(l_returnflag[i], l_linestatus[i]);
         AggregationState state = aggregationMap.computeIfAbsent(key, _ -> new AggregationState());
@@ -42,6 +58,37 @@ public class TPCHHandwritten {
         state.sum_l_discount += l_discount[i];
         state.count++;
       }
+    }
+
+
+
+    var entries = aggregationMap.entrySet();
+    var outputRows = entries.size();
+
+    for (Map.Entry<CompoundKey, AggregationState> entry : entries) {
+      CompoundKey key = entry.getKey();
+      String key0 = key.l_returnflag;
+      String key1 = key.l_linestatus;
+      AggregationState state = entry.getValue();
+      double agg0 = state.sum_qty;
+      double agg1 = state.sum_base_price;
+      double agg2 = state.sum_disc_price;
+      double agg3 = state.sum_charge;
+      double agg4 = state.sum_qty / state.count;
+      double agg5 = state.sum_base_price / state.count;
+      double agg6 = state.sum_l_discount / state.count;
+      int agg7 = state.count;
+
+      output0.add(key0);
+      output1.add(key1);
+      output2.add(agg0);
+      output3.add(agg1);
+      output4.add(agg2);
+      output5.add(agg3);
+      output6.add(agg4);
+      output7.add(agg5);
+      output8.add(agg6);
+      output9.add(agg7);
     }
 
     Attribute[] attributes = new Attribute[]{
@@ -57,46 +104,17 @@ public class TPCHHandwritten {
             new Attribute("agg_7", DataType.INT),
     };
 
-    var entries = aggregationMap.entrySet();
-    var outputRows = entries.size();
-    String[] output0 = new String[outputRows];
-    String[] output1 = new String[outputRows];
-    double[] output2 = new double[outputRows];
-    double[] output3 = new double[outputRows];
-    double[] output4 = new double[outputRows];
-    double[] output5 = new double[outputRows];
-    double[] output6 = new double[outputRows];
-    double[] output7 = new double[outputRows];
-    double[] output8 = new double[outputRows];
-    int[] output9 = new int[outputRows];
-    int i = 0;
-    for (Map.Entry<CompoundKey, AggregationState> entry : entries) {
-      CompoundKey key = entry.getKey();
-      output0[i] = key.l_returnflag;
-      output1[i] = key.l_linestatus;
-      AggregationState state = entry.getValue();
-      output2[i] = state.sum_qty;
-      output3[i] = state.sum_base_price;
-      output4[i] = state.sum_disc_price;
-      output5[i] = state.sum_charge;
-      output6[i] = state.sum_qty / state.count;
-      output7[i] = state.sum_base_price / state.count;
-      output8[i] = state.sum_l_discount / state.count;
-      output9[i] = state.count;
-      i++;
-    }
-
     return new RecordBatch(outputRows, attributes, new Column[]{
-            new StringColumn(output0),
-            new StringColumn(output1),
-            new DoubleColumn(output2),
-            new DoubleColumn(output3),
-            new DoubleColumn(output4),
-            new DoubleColumn(output5),
-            new DoubleColumn(output6),
-            new DoubleColumn(output7),
-            new DoubleColumn(output8),
-            new IntColumn(output9),
+            new StringColumn(output0.toArray(String[]::new)),
+            new StringColumn(output1.toArray(String[]::new)),
+            new DoubleColumn(output2.toDoubleArray()),
+            new DoubleColumn(output3.toDoubleArray()),
+            new DoubleColumn(output4.toDoubleArray()),
+            new DoubleColumn(output5.toDoubleArray()),
+            new DoubleColumn(output6.toDoubleArray()),
+            new DoubleColumn(output7.toDoubleArray()),
+            new DoubleColumn(output8.toDoubleArray()),
+            new IntColumn(output9.toIntArray()),
     });
   }
 

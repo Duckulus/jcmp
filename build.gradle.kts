@@ -13,6 +13,8 @@ repositories {
 dependencies {
     implementation("com.google.guava:guava:33.5.0-jre")
     implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("it.unimi.dsi:fastutil:8.5.18")
+    implementation("org.codehaus.janino:janino:3.1.12")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

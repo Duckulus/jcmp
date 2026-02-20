@@ -174,7 +174,7 @@ public class HashAggregationExecutor implements VectorizedExecutor {
       outputColumns[i] = inputAttribute.type().createColumn(outputRows);
     }
     for (int i = 0; i < aggregateCount; i++) {
-      DataType aggregateType = planNode.aggregates().get(i).type();
+      DataType aggregateType = planNode.aggregates().get(i).outputType();
       outputAttributes[keyColumnCount + i] = new Attribute("agg_" + i, aggregateType);
       outputColumns[keyColumnCount + i] = aggregateType.createColumn(outputRows);
     }
