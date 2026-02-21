@@ -48,7 +48,7 @@ public class TablePrinter {
     sb.append(separator);
 
     if (batch.size() > printLimit) {
-      sb.append(String.format("\n... und %d weitere Zeilen verborgen ...", batch.size() - printLimit));
+      sb.append(String.format("\n... and %d more tuples ...", batch.size() - printLimit));
     }
 
     return sb.toString();
