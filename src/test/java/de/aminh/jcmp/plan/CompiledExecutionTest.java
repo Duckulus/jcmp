@@ -1,9 +1,8 @@
 package de.aminh.jcmp.plan;
 
+import de.aminh.jcmp.compilation.CompiledQuery;
+import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.Column;
-import de.aminh.jcmp.data.Column.DoubleColumn;
-import de.aminh.jcmp.data.Column.IntColumn;
-import de.aminh.jcmp.data.Column.StringColumn;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
@@ -14,76 +13,37 @@ import de.aminh.jcmp.plan.Expression.BinaryOperator;
 import de.aminh.jcmp.plan.Expression.LiteralInt;
 import de.aminh.jcmp.plan.Expression.LiteralString;
 import de.aminh.jcmp.plan.PlanNode.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 import static de.aminh.jcmp.plan.TestUtils.createTable;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class VectorizedExecutionTest {
+public class CompiledExecutionTest {
 
-  private static void assertQueryResult(PlanNode query, Object[]... expectedResultBatches) {
-    VectorizedExecutor executor = Planner.plan(query);
-    executor.init();
-
-    for (Object[] expectedColumns : expectedResultBatches) {
-      RecordBatch batch = executor.next();
-      assertNotNull(batch);
-
-      assertEquals(expectedColumns.length, batch.attributes().length, "Mismatched column count");
-      assertEquals(expectedColumns.length, batch.columns().length, "Mismatched attribute count");
-
-      for (int i = 0; i < expectedColumns.length; i++) {
-        Object expectedColumnValues = expectedColumns[i];
-        Column actualColumn = batch.columns()[i];
-        assertEquals(Array.getLength(expectedColumnValues), batch.size());
-        switch (expectedColumnValues) {
-          case int[] expectedInts -> {
-            assertInstanceOf(IntColumn.class, actualColumn);
-            assertArrayEquals(expectedInts, ((IntColumn) actualColumn).values());
-          }
-          case double[] expectedDoubles -> {
-            assertInstanceOf(DoubleColumn.class, actualColumn);
-            assertArrayEquals(expectedDoubles, ((DoubleColumn) actualColumn).values());
-          }
-          case String[] expectedStrings -> {
-            assertInstanceOf(StringColumn.class, actualColumn);
-            assertArrayEquals(expectedStrings, ((StringColumn) actualColumn).values());
-          }
-          default -> throw new IllegalArgumentException("Unexpected Type for Column " + expectedColumnValues);
-        }
-      }
-    }
-    assertNull(executor.next());
+  private static void assertUnorderedQueryResult(Table table, PlanNode query, Object[] expectedColumns) {
+    CompiledQuery compiled = JavaQueryTranspiler.compile(table, query);
+    RecordBatch batch = compiled.execute(table);
+    TestUtils.assertUnorderedQueryResult(List.of(batch), expectedColumns);
   }
 
-  private static void assertUnorderedQueryResult(PlanNode query, Object[] expectedColumns) {
-    VectorizedExecutor executor = Planner.plan(query);
-    executor.init();
-
-    List<RecordBatch> batches = new ArrayList<>();
-    RecordBatch batch;
-    while ((batch = executor.next()) != null) {
-      batches.add(batch);
+  private static void assertRowCount(Table table, PlanNode query, int expectedCount) {
+    CompiledQuery compiled = JavaQueryTranspiler.compile(table, query);
+    RecordBatch batch = compiled.execute(table);
+    assertEquals(expectedCount, batch.size());
+    for (Column col : batch.columns()) {
+      assertEquals(expectedCount, col.length());
     }
-
-    TestUtils.assertUnorderedQueryResult(batches, expectedColumns);
   }
 
-  private static void assertRowCount(PlanNode query, int expectedCount) {
-    VectorizedExecutor executor = Planner.plan(query);
-    executor.init();
-    int actualCount = 0;
-    RecordBatch batch;
-    while ((batch = executor.next()) != null) {
-      actualCount += batch.size();
-    }
-    assertEquals(expectedCount, actualCount);
+  @BeforeAll
+  public static void setup() {
+    System.setProperty("jcmp.debug.codegen", "true");
   }
 
   @Test
@@ -92,7 +52,7 @@ public class VectorizedExecutionTest {
             new SingleRowNode(),
             new Expression[]{new LiteralInt(42), new LiteralInt(43)}
     );
-    assertQueryResult(query, new int[][]{
+    assertUnorderedQueryResult(createTable(), query, new int[][]{
             {42},
             {43}
     });
@@ -107,7 +67,7 @@ public class VectorizedExecutionTest {
             )}
     );
 
-    assertQueryResult(query, new int[][]{
+    assertUnorderedQueryResult(createTable(), query, new int[][]{
             {6}
     });
   }
@@ -130,17 +90,14 @@ public class VectorizedExecutionTest {
   void tableScan() {
     Table testTable = createTable((Object) new int[]{1, 2, 3, 4, 5});
     PlanNode query1 = new TableScanNode(testTable, List.of("a"), 5);
-    assertQueryResult(query1, new int[][]{
+    assertUnorderedQueryResult(testTable, query1, new int[][]{
             {1, 2, 3, 4, 5}
     });
 
     PlanNode query2 = new TableScanNode(testTable, List.of("a"), 3);
-    assertQueryResult(query2,
+    assertUnorderedQueryResult(testTable, query2,
             new int[][]{
-                    {1, 2, 3}
-            },
-            new int[][]{
-                    {4, 5}
+                    {1, 2, 3, 4, 5}
             });
   }
 
@@ -157,7 +114,7 @@ public class VectorizedExecutionTest {
             new TableScanNode(testTable, List.of("a")),
             limit
     );
-    assertRowCount(query, expectedRows);
+    assertRowCount(testTable, query, expectedRows);
   }
 
   @Test
@@ -168,9 +125,9 @@ public class VectorizedExecutionTest {
     );
     PlanNode query = new SelectionNode(
             new TableScanNode(testTable, List.of("a", "b")),
-            new Expression.Binary(BinaryOperator.LT, new Expression.ColumnValue("b", DataType.INT), new LiteralInt(8))
+            new Binary(BinaryOperator.LT, new Expression.ColumnValue("b", DataType.INT), new LiteralInt(8))
     );
-    assertQueryResult(query, new int[][]{
+    assertUnorderedQueryResult(testTable, query, new int[][]{
             {4, 5},
             {7, 6}
     });
@@ -188,7 +145,7 @@ public class VectorizedExecutionTest {
             List.of(new Aggregate.CountStar()),
             List.of("a")
     );
-    assertQueryResult(countQuery, new int[][]{
+    assertUnorderedQueryResult(testTable, countQuery, new int[][]{
             {1, 2},
             {3, 2}
     });
@@ -198,7 +155,7 @@ public class VectorizedExecutionTest {
             List.of(new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT))),
             List.of("a")
     );
-    assertQueryResult(sumQuery, new int[][]{
+    assertUnorderedQueryResult(testTable, sumQuery, new int[][]{
             {1, 2},
             {12, 18}
     });
@@ -208,7 +165,7 @@ public class VectorizedExecutionTest {
             List.of(new Aggregate.Avg(new Expression.ColumnValue("b", DataType.INT))),
             List.of("a")
     );
-    assertQueryResult(avgQuery, new Object[]{
+    assertUnorderedQueryResult(testTable, avgQuery, new Object[]{
             new int[]{1, 2},
             new double[]{(2 + 4 + 6) / 3d, (8 + 10) / 2d}
     });
@@ -221,7 +178,7 @@ public class VectorizedExecutionTest {
             ),
             List.of("a")
     );
-    assertQueryResult(multiAggQuery, new Object[]{
+    assertUnorderedQueryResult(testTable, multiAggQuery, new Object[]{
             new int[]{1, 2},
             new int[]{12, 18},
             new double[]{(1. + 1. + 2.) / 3., 4. / 2.}
@@ -233,7 +190,7 @@ public class VectorizedExecutionTest {
             ),
             List.of("a", "c")
     );
-    assertUnorderedQueryResult(multiKeyQuery, new Object[]{
+    assertUnorderedQueryResult(testTable, multiKeyQuery, new Object[]{
             new int[]{1, 1, 2},
             new double[]{1, 2, 2},
             new int[]{6, 6, 18}
@@ -247,9 +204,9 @@ public class VectorizedExecutionTest {
     );
     PlanNode query = new SelectionNode(
             new TableScanNode(testTable, List.of("a")),
-            new Expression.Binary(BinaryOperator.LE, new Expression.ColumnValue("a", DataType.STRING), new Expression.LiteralString("aab"))
+            new Binary(BinaryOperator.LE, new Expression.ColumnValue("a", DataType.STRING), new LiteralString("aab"))
     );
-    assertQueryResult(query, (Object[]) new String[][]{
+    assertUnorderedQueryResult(testTable, query, new String[][]{
             {"a", "aa", "aab"}
     });
   }

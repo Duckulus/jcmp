@@ -2,6 +2,8 @@ package de.aminh.jcmp.bench;
 
 import de.aminh.jcmp.TPCHHandwritten;
 import de.aminh.jcmp.TPCHPlans;
+import de.aminh.jcmp.compilation.CompiledQuery;
+import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
@@ -23,15 +25,18 @@ public class ExecutionBenchmark {
 
   private Table tpcTable;
   private PlanNode node;
+  private CompiledQuery preCompiledQuery;
 
-  @Setup
+  @Setup(Level.Trial)
   public void setup() {
     tpcTable = new TPCHDataLoader().loadData();
     node = TPCHPlans.q1(tpcTable);
+    
+    preCompiledQuery = JavaQueryTranspiler.compile(tpcTable, node);
   }
 
   @Benchmark
-  public void measureQ1Vectorized(Blackhole bh) {
+  public void measureVectorizedExec(Blackhole bh) {
     VectorizedExecutor executor = Planner.plan(node);
     executor.init();
     RecordBatch batch;
@@ -41,7 +46,24 @@ public class ExecutionBenchmark {
   }
 
   @Benchmark
-  public void measureQ1Handwritten(Blackhole bh) {
+  public void measureHandwrittenExec(Blackhole bh) {
     bh.consume(TPCHHandwritten.q1(tpcTable));
   }
+
+  @Benchmark
+  public void measureCodeGenExec(Blackhole bh) {
+    bh.consume(preCompiledQuery.execute(tpcTable));
+  }
+
+  @Benchmark
+  public void measureCodeGenCompile(Blackhole bh) {
+    bh.consume(JavaQueryTranspiler.compile(tpcTable, node));
+  }
+
+  @Benchmark
+  public void measureCodeGenEndToEnd(Blackhole bh) {
+    CompiledQuery query = JavaQueryTranspiler.compile(tpcTable, node);
+    bh.consume(query.execute(tpcTable));
+  }
+
 }

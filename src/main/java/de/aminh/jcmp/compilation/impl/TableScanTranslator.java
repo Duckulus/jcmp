@@ -42,7 +42,10 @@ public class TableScanTranslator implements NodeTranslator {
 
     ctx.code().append("for (int i = 0; i < inputRowCount; i++) {\n");
     ctx.setCurrentIndexVar("i");
-    parent.consume(ctx, planNode.columnNames());
+    List<String> columnNames = planNode.columnNames().stream()
+            .map(colName -> "%s[%s]".formatted(colName, ctx.currentIndexVar()))
+            .toList();
+    parent.consume(ctx, columnNames);
     ctx.code().append("}\n");
   }
 

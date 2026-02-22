@@ -7,3 +7,5 @@ data/tpch
 # Gradle
 build
 .gradle
+
+generated
