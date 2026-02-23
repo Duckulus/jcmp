@@ -13,7 +13,7 @@ public class Main {
 
     long start = System.currentTimeMillis();
     PrintResultExecutor.print(
-            TPCHPlans.q1(table)
+            TPCHPlans.q6(table)
     );
     IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - start));
 
@@ -22,7 +22,7 @@ public class Main {
     IO.println("Handwritten: %dms".formatted(System.currentTimeMillis() - start));
 
     start = System.currentTimeMillis();
-    CompiledQuery queryInstance = JavaQueryTranspiler.compile(table, TPCHPlans.q1(table));
+    CompiledQuery queryInstance = JavaQueryTranspiler.compile(table, TPCHPlans.q6(table));
     IO.println("Compilation: %dms".formatted(System.currentTimeMillis() - start));
 
     start = System.currentTimeMillis();

@@ -30,7 +30,8 @@ public sealed interface Expression {
 
   enum BinaryOperator {
     PLUS, MINUS, TIMES, DIVIDE,
-    EQUALS, LT, GT, LE, GE
+    EQUALS, LT, GT, LE, GE,
+    AND, OR
   }
 
   record Binary(BinaryOperator operator, Expression left, Expression right) implements Expression {
@@ -112,6 +113,16 @@ public sealed interface Expression {
                 output[i] = leftValues[i] >= rightValues[i] ? 1 : 0;
               }
             }
+            case OR -> {
+              for (int i = 0; i < output.length; i++) {
+                output[i] = leftValues[i] == 1  ||  rightValues[i] == 1 ? 1 : 0;
+              }
+            }
+            case AND -> {
+              for (int i = 0; i < output.length; i++) {
+                output[i] = leftValues[i] == 1  &&  rightValues[i] == 1 ? 1 : 0;
+              }
+            }
             default -> throw new TypeException("Invalid Operator %s for %s and %s", oper.name(), leftType, rightType);
           }
 
@@ -171,7 +182,8 @@ public sealed interface Expression {
           }
           return switch (oper) {
             case PLUS, MINUS, TIMES, DIVIDE -> new DoubleColumn(doubleOutput);
-            case EQUALS, LT, GT, LE, GE -> new IntColumn(intOutput);
+            case EQUALS, LT, GT, LE, GE  -> new IntColumn(intOutput);
+            default -> throw new TypeException("Invalid Operator %s for %s and %s", oper.name(), leftType, rightType);
           };
         } else if (leftType == DataType.STRING && rightType == DataType.STRING) {
           String[] leftValues = ((StringColumn) left.evalSlice(input, start, end)).values();
@@ -234,7 +246,7 @@ public sealed interface Expression {
           throw new TypeException("Invalid Operator %s for %s and %s", oper.name(), leftType, rightType);
         }
         yield switch (oper) {
-          case EQUALS, LT, GT, LE, GE -> DataType.INT;
+          case EQUALS, LT, GT, LE, GE, AND, OR -> DataType.INT;
           case PLUS, MINUS, TIMES, DIVIDE -> {
             if (leftType == DataType.INT || leftType == DataType.DOUBLE) {
               yield leftType;

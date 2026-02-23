@@ -38,13 +38,18 @@ public class HashAggregationTranslator implements NodeTranslator {
     String attributes = String.join(";\n   ", keyVars) + ";";
     String constructorArgs = String.join(", ", keyVars);
     String constructorAssignments = planNode.keys().stream().map(key -> "this.%s = %s;".formatted(key, key)).collect(Collectors.joining("\n"));
-    String equalsComparisons = planNode.keys().stream().map(key -> {
-      if (ctx.table().getAttribute(key).type() == DataType.STRING) {
-        return "Objects.equals(this.%s, that.%s)".formatted(key, key);
-      } else {
-        return "this.%s == that.%s".formatted(key, key);
-      }
-    }).collect(Collectors.joining(" && "));
+    String equalsComparisons;
+    if (planNode.keys().isEmpty()) {
+      equalsComparisons = "true";
+    } else {
+      equalsComparisons = planNode.keys().stream().map(key -> {
+        if (ctx.table().getAttribute(key).type() == DataType.STRING) {
+          return "Objects.equals(this.%s, that.%s)".formatted(key, key);
+        } else {
+          return "this.%s == that.%s".formatted(key, key);
+        }
+      }).collect(Collectors.joining(" && "));
+    }
     String hashValues = String.join(", ", planNode.keys());
     ctx.prelude().append("""
             class CompoundKey {

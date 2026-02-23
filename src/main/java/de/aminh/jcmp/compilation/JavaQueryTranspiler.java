@@ -1,9 +1,6 @@
 package de.aminh.jcmp.compilation;
 
-import de.aminh.jcmp.compilation.impl.HashAggregationTranslator;
-import de.aminh.jcmp.compilation.impl.RootTranslator;
-import de.aminh.jcmp.compilation.impl.SelectionTranslator;
-import de.aminh.jcmp.compilation.impl.TableScanTranslator;
+import de.aminh.jcmp.compilation.impl.*;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.plan.PlanNode;
 import org.codehaus.commons.compiler.CompileException;
@@ -86,15 +83,25 @@ public class JavaQueryTranspiler {
         aggregationTranslator.setInput(child);
         yield aggregationTranslator;
       }
-      case PlanNode.LimitNode limitNode -> null;
-      case PlanNode.ProjectionNode projectionNode -> null;
+      case PlanNode.LimitNode limitNode -> {
+        LimitTranslator limitTranslator = new LimitTranslator(limitNode, parent);
+        NodeTranslator child = preparePlan(limitNode.child(), limitTranslator);
+        limitTranslator.setInput(child);
+        yield limitTranslator;
+      }
+      case PlanNode.ProjectionNode projectionNode -> {
+        ProjectionTranslator projectionTranslator = new ProjectionTranslator(projectionNode, parent);
+        NodeTranslator child = preparePlan(projectionNode.child(), projectionTranslator);
+        projectionTranslator.setInput(child);
+        yield projectionTranslator;
+      }
       case PlanNode.SelectionNode selectionNode -> {
         SelectionTranslator selectionTranslator = new SelectionTranslator(selectionNode, parent);
         NodeTranslator child = preparePlan(selectionNode.child(), selectionTranslator);
         selectionTranslator.setInput(child);
         yield selectionTranslator;
       }
-      case PlanNode.SingleRowNode singleRowNode -> null;
+      case PlanNode.SingleRowNode singleRowNode -> new SingleRowTranslator(singleRowNode, parent);
       case PlanNode.TableScanNode tableScanNode -> new TableScanTranslator(tableScanNode, parent);
     };
   }

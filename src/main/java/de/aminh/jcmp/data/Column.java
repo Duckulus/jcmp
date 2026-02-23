@@ -1,5 +1,7 @@
 package de.aminh.jcmp.data;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * An in-memory representation of a Column
  */
@@ -111,6 +113,18 @@ public sealed interface Column {
       case IntColumn(int[] values) -> values.length;
       case DoubleColumn(double[] values) -> values.length;
       case StringColumn(String[] values) -> values.length;
+    };
+  }
+
+  default Column merge(Column other) {
+    return switch (this) {
+      case IntColumn(int[] values) when other instanceof IntColumn(int[] otherValues) ->
+              new IntColumn(ArrayUtils.addAll(values, otherValues));
+      case DoubleColumn(double[] values) when other instanceof DoubleColumn(double[] otherValues) ->
+              new DoubleColumn(ArrayUtils.addAll(values, otherValues));
+      case StringColumn(String[] values) when other instanceof StringColumn(String[] otherValues) ->
+              new StringColumn(ArrayUtils.addAll(values, otherValues));
+      default -> throw new IllegalArgumentException("Column types didn't match");
     };
   }
 

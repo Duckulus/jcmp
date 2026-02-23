@@ -1,6 +1,5 @@
 package de.aminh.jcmp.bench;
 
-import de.aminh.jcmp.TPCHHandwritten;
 import de.aminh.jcmp.TPCHPlans;
 import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryTranspiler;
@@ -23,6 +22,9 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 5, time = 2)
 public class ExecutionBenchmark {
 
+  @Param({"Q1", "Q6"})
+  private String tpchQuery;
+
   private Table tpcTable;
   private PlanNode node;
   private CompiledQuery preCompiledQuery;
@@ -30,7 +32,12 @@ public class ExecutionBenchmark {
   @Setup(Level.Trial)
   public void setup() {
     tpcTable = new TPCHDataLoader().loadData();
-    node = TPCHPlans.q1(tpcTable);
+
+    node = switch (tpchQuery) {
+      case "Q1" -> TPCHPlans.q1(tpcTable);
+      case "Q6" -> TPCHPlans.q6(tpcTable);
+      default -> throw new IllegalArgumentException("Unknown query: " + tpchQuery);
+    };
     
     preCompiledQuery = JavaQueryTranspiler.compile(tpcTable, node);
   }
@@ -46,22 +53,17 @@ public class ExecutionBenchmark {
   }
 
   @Benchmark
-  public void measureHandwrittenExec(Blackhole bh) {
-    bh.consume(TPCHHandwritten.q1(tpcTable));
-  }
-
-  @Benchmark
-  public void measureCodeGenExec(Blackhole bh) {
+  public void measureCompiledExec(Blackhole bh) {
     bh.consume(preCompiledQuery.execute(tpcTable));
   }
 
   @Benchmark
-  public void measureCodeGenCompile(Blackhole bh) {
+  public void measureCompilation(Blackhole bh) {
     bh.consume(JavaQueryTranspiler.compile(tpcTable, node));
   }
 
   @Benchmark
-  public void measureCodeGenEndToEnd(Blackhole bh) {
+  public void measureCompiledEndToEnd(Blackhole bh) {
     CompiledQuery query = JavaQueryTranspiler.compile(tpcTable, node);
     bh.consume(query.execute(tpcTable));
   }

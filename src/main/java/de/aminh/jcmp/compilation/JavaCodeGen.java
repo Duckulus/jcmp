@@ -35,13 +35,15 @@ public class JavaCodeGen {
           case GT -> ">";
           case LE -> "<=";
           case GE -> ">=";
+          case AND -> "&&";
+          case OR -> "||";
         };
         if (left.type() == DataType.STRING) {
           String leftString = translateExpression(left, ctx);
           String rightString = translateExpression(right, ctx);
           yield switch (oper) {
             case EQUALS -> "%s.equals(%s)".formatted(leftString, rightString);
-            case LT, GT, LE, GE -> "%s.compareTo(%s) %s 0".formatted(leftString, rightString, operatorSymbol);
+            case LT, GT, LE, GE -> "(%s.compareTo(%s) %s 0)".formatted(leftString, rightString, operatorSymbol);
             default -> throw new TypeException("Invalid Operator %s for String".formatted(oper));
           };
         } else {

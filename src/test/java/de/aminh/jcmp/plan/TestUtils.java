@@ -1,6 +1,9 @@
 package de.aminh.jcmp.plan;
 
+import de.aminh.jcmp.compilation.CompiledQuery;
+import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.*;
+import de.aminh.jcmp.execution.VectorizedExecutor;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -8,6 +11,35 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestUtils {
+
+  public enum ExecutionEngine {
+    VECTORIZED {
+      @Override
+      public RecordBatch execute(Table table, PlanNode plan) {
+        VectorizedExecutor executor = Planner.plan(plan);
+        executor.init();
+        RecordBatch merged = null;
+        RecordBatch batch;
+        while ((batch = executor.next()) != null) {
+          if (merged == null) {
+            merged = batch;
+          } else {
+            merged = merged.merge(batch);
+          }
+        }
+        return merged;
+      }
+    }, COMPILED {
+      @Override
+      public RecordBatch execute(Table table, PlanNode plan) {
+        CompiledQuery compiledQuery = JavaQueryTranspiler.compile(table, plan);
+        return compiledQuery.execute(table);
+      }
+    };
+
+    public abstract RecordBatch execute(Table table, PlanNode plan);
+
+  }
 
   public static Table createTable(Object... columnValues) {
     return new Table() {
@@ -48,7 +80,9 @@ public class TestUtils {
     };
   }
 
-  public static void assertUnorderedQueryResult(List<RecordBatch> recordBatches, Object[] expectedColumns) {
+  public static void assertUnorderedQueryResult(ExecutionEngine engine, Table table, PlanNode plan, Object[] expectedColumns) {
+    RecordBatch batch = engine.execute(table, plan);
+
     Set<List<Object>> expectedRows = new HashSet<>();
     int rowCount = Array.getLength(expectedColumns[0]);
     for (int i = 0; i < rowCount; i++) {
@@ -60,18 +94,22 @@ public class TestUtils {
     }
 
     Set<List<Object>> actualRows = new HashSet<>();
-    for (RecordBatch batch : recordBatches) {
-      for (int i = 0; i < batch.size(); i++) {
-        List<Object> row = new ArrayList<>();
-        for (int j = 0; j < batch.columns().length; j++) {
-          Object value = batch.columns()[j].getValue(i);
-          row.add(value);
-        }
-        actualRows.add(row);
+    for (int i = 0; i < batch.size(); i++) {
+      List<Object> row = new ArrayList<>();
+      for (int j = 0; j < batch.columns().length; j++) {
+        Object value = batch.columns()[j].getValue(i);
+        row.add(value);
       }
+      actualRows.add(row);
     }
 
     assertEquals(expectedRows, actualRows);
+  }
+
+  public static void assertRowCount(ExecutionEngine engine, Table table, PlanNode query, int expectedCount) {
+    RecordBatch batch = engine.execute(table, query);
+    int rowCount = batch == null ? 0 : batch.size();
+    assertEquals(expectedCount,  rowCount);
   }
 
 }
