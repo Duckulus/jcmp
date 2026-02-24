@@ -36,8 +36,6 @@ public class HashAggregationTranslator implements NodeTranslator {
             JavaCodeGen.getTypeName(ctx.table().getAttribute(key).type()), key
     )).toList();
     String attributes = String.join(";\n   ", keyVars) + ";";
-    String constructorArgs = String.join(", ", keyVars);
-    String constructorAssignments = planNode.keys().stream().map(key -> "this.%s = %s;".formatted(key, key)).collect(Collectors.joining("\n"));
     String equalsComparisons;
     if (planNode.keys().isEmpty()) {
       equalsComparisons = "true";
@@ -54,9 +52,7 @@ public class HashAggregationTranslator implements NodeTranslator {
     ctx.prelude().append("""
             class CompoundKey {
               %s
-              public CompoundKey(%s) {
-                %s
-              }
+            
               @Override
               public boolean equals(Object o) {
                 if (this == o) return true;
@@ -69,7 +65,8 @@ public class HashAggregationTranslator implements NodeTranslator {
                 return Objects.hash(%s);
               }
             }
-            """.formatted(attributes, constructorArgs, constructorAssignments, equalsComparisons, hashValues));
+            CompoundKey lookupKey = new CompoundKey();
+            """.formatted(attributes, equalsComparisons, hashValues));
 
     String aggregateAttributes = Streams.mapWithIndex(planNode.aggregates().stream(), (Aggregate agg, long i) ->
             {
@@ -84,6 +81,12 @@ public class HashAggregationTranslator implements NodeTranslator {
             }
             
             """.formatted(aggregateAttributes));
+    ctx.prelude().append("AggregationState lastState = null;\n");
+    for (String key : planNode.keys()) {
+      DataType type = ctx.table().getAttribute(key).type();
+      ctx.prelude().append("%s last_%s = %s;\n".formatted(JavaCodeGen.getTypeName(type), key, JavaCodeGen.getNullValue(type)));
+    }
+
     ctx.prelude().append("Map<CompoundKey, AggregationState> aggregationMap = new HashMap<>();\n");
     ctx.prelude().append("\n");
 
@@ -123,15 +126,52 @@ public class HashAggregationTranslator implements NodeTranslator {
 
   @Override
   public void consume(TranslationContext ctx, List<String> inputColumns) {
-    String keys = planNode.keys().stream().map(key -> "%s[%s]".formatted(
+    ctx.code().append("AggregationState state;\n");
+
+    String fastPath = "state = lastState;";
+
+    StringBuilder slowPath = new StringBuilder();
+    List<String> keyValues = planNode.keys().stream().map(key -> "%s[%s]".formatted(
             key, ctx.currentIndexVar()
-    )).collect(Collectors.joining(", "));
-    ctx.code().append("CompoundKey key = new CompoundKey(%s);\n".formatted(keys));
-    ctx.code().append("AggregationState state = (AggregationState) aggregationMap.get(key);\n");
-    ctx.code().append("if (state == null) {\n");
-    ctx.code().append("  state = new AggregationState();\n");
-    ctx.code().append("  aggregationMap.put(key, state);\n");
-    ctx.code().append("}\n");
+    )).toList();
+    for (int i = 0; i < planNode.keys().size(); i++) {
+      slowPath.append("lookupKey.%s = %s;\n".formatted(planNode.keys().get(i), keyValues.get(i)));
+    }
+    slowPath.append("""
+            state = (AggregationState) aggregationMap.get(lookupKey);
+            if (state == null) {
+              state = new AggregationState();
+              CompoundKey persistentKey = new CompoundKey();
+            """);
+    for (int i = 0; i < planNode.keys().size(); i++) {
+      slowPath.append("persistentKey.%s = %s;\n".formatted(planNode.keys().get(i), keyValues.get(i)));
+    }
+    slowPath.append("""
+              aggregationMap.put(persistentKey, state);
+            }
+            """);
+    slowPath.append("lastState = state;\n");
+    for (int i = 0; i < planNode.keys().size(); i++) {
+      slowPath.append("last_%s = %s;\n".formatted(planNode.keys().get(i), keyValues.get(i)));
+    }
+
+    StringBuilder fastPathCondition = new StringBuilder("lastState != null");
+    for (int i = 0; i < planNode.keys().size(); i++) {
+      fastPathCondition.append(" && ");
+      String keyName = planNode.keys().get(i);
+      switch (ctx.table().getAttribute(keyName).type()) {
+        case INT, DOUBLE -> fastPathCondition.append("%s == last_%s".formatted(keyValues.get(i), keyName));
+        case STRING -> fastPathCondition.append("%s.equals(last_%s)".formatted(keyValues.get(i), keyName));
+      }
+    }
+    ctx.code().append("""
+            if (%s) {
+              %s
+            } else {
+              %s
+            }
+            """.formatted(fastPathCondition, fastPath, slowPath));
+
     ctx.code().append("state.count++;\n");
     for (int i = 0; i < planNode.aggregates().size(); i++) {
       Aggregate aggregate = planNode.aggregates().get(i);

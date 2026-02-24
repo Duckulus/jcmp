@@ -22,6 +22,14 @@ public class JavaCodeGen {
     };
   }
 
+  public static String getNullValue(DataType type) {
+    return switch (type) {
+      case INT -> "0";
+      case DOUBLE -> "0d";
+      case STRING -> "null";
+    };
+  }
+
   public static String translateExpression(Expression expression, TranslationContext ctx) {
     return switch (expression) {
       case Expression.Binary(Expression.BinaryOperator oper, Expression left, Expression right) -> {
