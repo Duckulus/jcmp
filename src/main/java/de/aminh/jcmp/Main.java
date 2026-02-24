@@ -2,18 +2,20 @@ package de.aminh.jcmp;
 
 import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryTranspiler;
-import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
+import de.aminh.jcmp.data.tpch.TPCHTable;
 import de.aminh.jcmp.execution.impl.PrintResultExecutor;
 
 public class Main {
   static void main() {
     System.setProperty("jcmp.debug.codegen", "true");
-    Table table = new TPCHDataLoader().loadData();
+//    TPCHTable table = TPCHDataLoader.loadCsvData();
+//    TPCHDataLoader.writeBinaryData(table, "tpch_sf1.bin");
+    TPCHTable table = TPCHDataLoader.loadBinaryData("tpch_sf1.bin");
 
     long start = System.currentTimeMillis();
     PrintResultExecutor.print(
-            TPCHPlans.q6(table)
+            TPCHPlans.q1(table)
     );
     IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - start));
 
@@ -22,7 +24,7 @@ public class Main {
     IO.println("Handwritten: %dms".formatted(System.currentTimeMillis() - start));
 
     start = System.currentTimeMillis();
-    CompiledQuery queryInstance = JavaQueryTranspiler.compile(table, TPCHPlans.q6(table));
+    CompiledQuery queryInstance = JavaQueryTranspiler.compile(table, TPCHPlans.q1(table));
     IO.println("Compilation: %dms".formatted(System.currentTimeMillis() - start));
 
     start = System.currentTimeMillis();

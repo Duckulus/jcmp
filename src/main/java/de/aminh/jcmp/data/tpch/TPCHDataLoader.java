@@ -2,7 +2,6 @@ package de.aminh.jcmp.data.tpch;
 
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;
-import de.aminh.jcmp.data.Table;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -12,16 +11,89 @@ import java.util.Map;
 
 public class TPCHDataLoader {
 
-  private final Map<String, Column> allColumns = new HashMap<>();
+  private static final int BUFFER_SIZE = 64 * 1024;
 
-  public Table loadData() {
+  @SuppressWarnings("unused")
+  public static void writeBinaryData(TPCHTable table, String fileName) {
+    try (DataOutputStream out = new DataOutputStream(
+            new BufferedOutputStream(new FileOutputStream(binaryFileName(fileName)), BUFFER_SIZE))) {
+      for(TPCHSchema schema : TPCHSchema.values()) {
+        for(Attribute attribute : schema.getAttributes()) {
+          Column column = table.getColumn(attribute.name());
+          out.writeInt(column.length());
+          switch (column) {
+            case Column.IntColumn(int[] values) -> {
+              for (int value : values) {
+                out.writeInt(value);
+              }
+            }
+            case Column.DoubleColumn(double[] values) -> {
+              for (double value : values) {
+                out.writeDouble(value);
+              }
+            }
+            case Column.StringColumn(String[] values) -> {
+              for (String value : values) {
+                out.writeUTF(value);
+              }
+            }
+          }
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("There was an error writing out data", e);
+    }
+  }
+
+  public static TPCHTable loadBinaryData(String fileName) {
+    long currentTimeMillis = System.currentTimeMillis();
+    try (DataInputStream in = new DataInputStream(
+            new BufferedInputStream(new FileInputStream(binaryFileName(fileName)), BUFFER_SIZE))) {
+      Map<String, Column> allColumns = new HashMap<>();
+      for(TPCHSchema schema : TPCHSchema.values()) {
+        for(Attribute attribute : schema.getAttributes()) {
+          Column column = attribute.type().createColumn(in.readInt());
+          allColumns.put(attribute.name(), column);
+          switch (column) {
+            case Column.IntColumn(int[] values) -> {
+              for(int i = 0; i < values.length; i++) {
+                values[i] = in.readInt();
+              }
+            }
+            case Column.DoubleColumn(double[] values) -> {
+              for(int i = 0; i < values.length; i++) {
+                values[i] = in.readDouble();
+              }
+            }
+            case Column.StringColumn(String[] values) -> {
+              for(int i = 0; i < values.length; i++) {
+                values[i] = in.readUTF();
+              }
+            }
+          }
+        }
+      }
+      IO.println("Finished reading %s in %dms".formatted(fileName, System.currentTimeMillis() - currentTimeMillis));
+      return new TPCHTable(allColumns);
+    } catch (IOException e) {
+      throw new RuntimeException("There was an error reading in data", e);
+    }
+  }
+
+  private static String binaryFileName(String fileName) {
+    return "./data/tpch/%s".formatted(fileName);
+  }
+
+  @SuppressWarnings("unused")
+  public static TPCHTable loadCsvData() {
+    Map<String, Column> allColumns = new HashMap<>();
     for (TPCHSchema schema : TPCHSchema.values()) {
-      readTable(schema);
+      readCsvTable(schema, allColumns);
     }
     return new TPCHTable(allColumns);
   }
 
-  private void readTable(TPCHSchema schema) {
+  private static void readCsvTable(TPCHSchema schema, Map<String, Column> allColumns) {
     String path = getFilePath(schema);
     int nLines= countLines(path);
 
@@ -36,7 +108,7 @@ public class TPCHDataLoader {
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(path))) {
       String line;
       int currentRow = 0;
-      long start = System.currentTimeMillis();
+      long currentTimeMillis = System.currentTimeMillis();
       while ((line = bufferedReader.readLine()) != null) {
         String[] split = line.split("\\|");
         for (int i = 0; i < columns.length; i++) {
@@ -44,13 +116,13 @@ public class TPCHDataLoader {
         }
         currentRow++;
       }
-      IO.println("Finished reading %d rows of table %s in %dms".formatted(nLines, schema.getTableName(), System.currentTimeMillis() - start));
+      IO.println("Finished reading %d rows of table %s in %dms".formatted(nLines, schema.getTableName(), System.currentTimeMillis() - currentTimeMillis));
     } catch (IOException e) {
       throw new RuntimeException("There was an error reading in the data", e);
     }
   }
 
-  private int countLines(String path) {
+  private static int countLines(String path) {
     try (InputStream is = new BufferedInputStream(Files.newInputStream(Path.of(path)))) {
       byte[] c = new byte[1024 * 32];
       int count = 0;

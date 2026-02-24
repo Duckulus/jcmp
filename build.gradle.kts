@@ -1,3 +1,6 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
 plugins {
     id("java")
     id("me.champeau.jmh") version "0.7.3"
@@ -19,6 +22,14 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+val timestamp: String = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Date())
+tasks.jmh {
+    humanOutputFile = project.layout.buildDirectory.file("reports/jmh/human_${timestamp}.txt").get().asFile
+    resultsFile = project.layout.buildDirectory.file("reports/jmh/results_${timestamp}.csv").get().asFile
+    profilers = listOf("perfnorm", "perfasm")
+    resultFormat = "CSV"
 }
 
 tasks.test {

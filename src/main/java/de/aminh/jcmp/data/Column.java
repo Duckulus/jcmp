@@ -2,6 +2,7 @@ package de.aminh.jcmp.data;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+
 /**
  * An in-memory representation of a Column
  */

@@ -4,6 +4,7 @@ import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Table;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,10 +17,14 @@ import java.util.Map;
 public class TPCHTable implements Table {
 
   private final Map<String, Column> columns;
-  private final Map<String, Attribute> attributes;
+  private transient Map<String, Attribute> attributes;
 
   public TPCHTable(Map<String, Column> columns) {
     this.columns = columns;
+    initAttributes();
+  }
+
+  private void initAttributes() {
     this.attributes = new HashMap<>();
     for (TPCHSchema schema : TPCHSchema.values()) {
       for (Attribute attribute : schema.getAttributes()) {

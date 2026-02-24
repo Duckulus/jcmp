@@ -20,7 +20,7 @@ public class HandwrittenBenchmark {
 
   @Setup(Level.Trial)
   public void setup() {
-    tpcTable = new TPCHDataLoader().loadData();
+    tpcTable = TPCHDataLoader.loadBinaryData("tpch_sf1.bin");
   }
 
   @Benchmark

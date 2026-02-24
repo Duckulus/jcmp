@@ -31,7 +31,7 @@ public class ExecutionBenchmark {
 
   @Setup(Level.Trial)
   public void setup() {
-    tpcTable = new TPCHDataLoader().loadData();
+    tpcTable = TPCHDataLoader.loadBinaryData("tpch_sf1.bin");
 
     node = switch (tpchQuery) {
       case "Q1" -> TPCHPlans.q1(tpcTable);
