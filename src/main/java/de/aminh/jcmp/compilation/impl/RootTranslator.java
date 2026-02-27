@@ -8,7 +8,6 @@ import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.plan.PlanNode;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -61,9 +60,11 @@ public class RootTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx, List<String> inputColumns) {
-    for(int i = 0; i < inputColumns.size(); i++) {
-      ctx.code().append("output_%d.add(%s);\n".formatted(i, inputColumns.get(i)));
+  public void consume(TranslationContext ctx) {
+    Attribute[] outputSchema = input.getPlanNode().outputSchema();
+    for(int i = 0; i < outputSchema.length; i++) {
+      String symbol = ctx.resolveSymbol(outputSchema[i].name());
+      ctx.code().append("output_%d.add(%s);\n".formatted(i, symbol));
     }
   }
 

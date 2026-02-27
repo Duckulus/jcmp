@@ -2,13 +2,20 @@ package de.aminh.jcmp.compilation;
 
 import de.aminh.jcmp.data.Table;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class TranslationContext {
 
   private final Table table;
 
   private final StringBuilder prelude;
   private final StringBuilder code;
-  private String currentIndexVar;
+
+  private final Map<String, String> symbolTable = new HashMap<>();
+
+  private final AtomicInteger symbolId = new AtomicInteger(0);
 
   public TranslationContext(Table table) {
     this.table = table;
@@ -24,16 +31,23 @@ public class TranslationContext {
     return code;
   }
 
-  public String currentIndexVar() {
-    return currentIndexVar;
-  }
-
-  public void setCurrentIndexVar(String currentIndexVar) {
-    this.currentIndexVar = currentIndexVar;
-  }
-
   public Table table() {
     return table;
   }
 
+  public void declareSymbol(String columnName, String symbolName) {
+    symbolTable.put(columnName, symbolName);
+  }
+
+  public String resolveSymbol(String columnName) {
+    String symbolName = symbolTable.get(columnName);
+    if (symbolName == null) {
+      throw new IllegalArgumentException("Symbol for column \"%s\" not found".formatted(columnName));
+    }
+    return symbolName;
+  }
+
+  public int nextId() {
+    return symbolId.getAndIncrement();
+  }
 }

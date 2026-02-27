@@ -94,14 +94,14 @@ public class TPCHHandwritten {
     Attribute[] attributes = new Attribute[]{
             new Attribute("l_returnflag", DataType.STRING),
             new Attribute("l_linestatus", DataType.STRING),
-            new Attribute("agg_0", DataType.DOUBLE),
-            new Attribute("agg_1", DataType.DOUBLE),
-            new Attribute("agg_2", DataType.DOUBLE),
-            new Attribute("agg_3", DataType.DOUBLE),
-            new Attribute("agg_4", DataType.DOUBLE),
-            new Attribute("agg_5", DataType.DOUBLE),
-            new Attribute("agg_6", DataType.DOUBLE),
-            new Attribute("agg_7", DataType.INT),
+            new Attribute("sum_qty", DataType.DOUBLE),
+            new Attribute("sum_base_price", DataType.DOUBLE),
+            new Attribute("sum_disc_price", DataType.DOUBLE),
+            new Attribute("sum_charge", DataType.DOUBLE),
+            new Attribute("avg_qty", DataType.DOUBLE),
+            new Attribute("avg_price", DataType.DOUBLE),
+            new Attribute("avg_disc", DataType.DOUBLE),
+            new Attribute("count_order", DataType.INT),
     };
 
     return new RecordBatch(outputRows, attributes, new Column[]{

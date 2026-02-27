@@ -5,9 +5,6 @@ import de.aminh.jcmp.compilation.TranslationContext;
 import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.SingleRowNode;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SingleRowTranslator implements NodeTranslator {
 
   private final SingleRowNode singleRowNode;
@@ -21,11 +18,11 @@ public class SingleRowTranslator implements NodeTranslator {
 
   @Override
   public void produce(TranslationContext ctx) {
-    parent.consume(ctx, new ArrayList<>());
+    parent.consume(ctx);
   }
 
   @Override
-  public void consume(TranslationContext ctx, List<String> inputColumns) {
+  public void consume(TranslationContext ctx) {
 
   }
 

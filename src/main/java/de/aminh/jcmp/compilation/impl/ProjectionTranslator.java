@@ -7,9 +7,6 @@ import de.aminh.jcmp.plan.Expression;
 import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.ProjectionNode;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ProjectionTranslator implements NodeTranslator {
 
   private final ProjectionNode planNode;
@@ -32,16 +29,16 @@ public class ProjectionTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx, List<String> inputColumns) {
-    List<String> outputColumns = new ArrayList<>();
+  public void consume(TranslationContext ctx) {
     for (int i = 0; i < planNode.expressions().length; i++) {
-      String variableName = "proj_" + i;
-      outputColumns.add(variableName);
+      String variableName = "proj" + ctx.nextId();
+      String outputColName = planNode.outputSchema()[i].name();
+      ctx.declareSymbol(outputColName, variableName);
       Expression expr = planNode.expressions()[i];
       ctx.code().append("%s %s = %s;\n"
               .formatted(JavaCodeGen.getTypeName(expr.type()), variableName, JavaCodeGen.translateExpression(expr, ctx)));
     }
-    parent.consume(ctx, outputColumns);
+    parent.consume(ctx);
   }
 
   @Override

@@ -6,8 +6,6 @@ import de.aminh.jcmp.compilation.TranslationContext;
 import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.SelectionNode;
 
-import java.util.List;
-
 public class SelectionTranslator implements NodeTranslator {
 
   private final SelectionNode planNode;
@@ -30,13 +28,13 @@ public class SelectionTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx, List<String> inputColumns) {
+  public void consume(TranslationContext ctx) {
     ctx.code().append(
             "if (%s) {\n".formatted(
                     JavaCodeGen.translateExpression(planNode.predicate(), ctx)
             )
     );
-    parent.consume(ctx, inputColumns);
+    parent.consume(ctx);
     ctx.code().append("}\n");
   }
 

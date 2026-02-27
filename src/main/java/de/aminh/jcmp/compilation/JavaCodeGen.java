@@ -61,7 +61,7 @@ public class JavaCodeGen {
         }
 
       }
-      case Expression.ColumnValue(String name, _) -> "%s[%s]".formatted(name, ctx.currentIndexVar());
+      case Expression.ColumnValue(String name, _) -> ctx.resolveSymbol(name);
       case Expression.LiteralDouble(double value) -> String.valueOf(value);
       case Expression.LiteralInt(int value) -> String.valueOf(value);
       case Expression.LiteralString(String value) -> "\"" + value + "\"";

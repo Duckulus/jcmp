@@ -3,10 +3,7 @@ package de.aminh.jcmp.plan;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.plan.Expression.Binary;
-import de.aminh.jcmp.plan.Expression.BinaryOperator;
-import de.aminh.jcmp.plan.Expression.LiteralInt;
-import de.aminh.jcmp.plan.Expression.LiteralString;
+import de.aminh.jcmp.plan.Expression.*;
 import de.aminh.jcmp.plan.PlanNode.*;
 import de.aminh.jcmp.plan.TestUtils.ExecutionEngine;
 import org.junit.jupiter.api.BeforeAll;
@@ -32,7 +29,8 @@ public class ExecutionTest {
   void integerLiteral(ExecutionEngine engine) {
     PlanNode query = new ProjectionNode(
             new SingleRowNode(),
-            new Expression[]{new LiteralInt(42), new LiteralInt(43)}
+            new Expression[]{new LiteralInt(42), new LiteralInt(43)},
+            List.of("x", "y")
     );
     assertUnorderedQueryResult(engine, createTable(), query, new int[][]{
             {42},
@@ -47,7 +45,8 @@ public class ExecutionTest {
             new SingleRowNode(),
             new Expression[]{new Binary(
                     BinaryOperator.PLUS, new LiteralInt(2), new LiteralInt(4)
-            )}
+            )},
+            List.of("x")
     );
 
     assertUnorderedQueryResult(engine, createTable(), query, new int[][]{
@@ -62,7 +61,8 @@ public class ExecutionTest {
             new SingleRowNode(),
             new Expression[]{new Binary(
                     BinaryOperator.PLUS, new LiteralInt(2), new LiteralString("hi")
-            )}
+            )},
+            List.of("x")
     );
 
     assertThrows(TypeException.class, () -> engine.execute(createTable(), query));
@@ -116,7 +116,7 @@ public class ExecutionTest {
     );
     PlanNode query1 = new SelectionNode(
             new TableScanNode(testTable, List.of("a", "b")),
-            new Expression.Binary(BinaryOperator.LT, new Expression.ColumnValue("b", DataType.INT), new LiteralInt(8))
+            new Binary(BinaryOperator.LT, new ColumnValue("b", DataType.INT), new LiteralInt(8))
     );
     assertUnorderedQueryResult(engine, testTable, query1,
             new int[][]{
@@ -126,11 +126,11 @@ public class ExecutionTest {
 
     PlanNode query2 = new SelectionNode(
             new TableScanNode(testTable, List.of("a")),
-            new Expression.Binary(BinaryOperator.AND,
-                    new Expression.Binary(BinaryOperator.GT, new Expression.ColumnValue("a", DataType.INT), new LiteralInt(2)),
-                    new Expression.Binary(BinaryOperator.LT, new Expression.ColumnValue("a", DataType.INT), new LiteralInt(5))
+            new Binary(BinaryOperator.AND,
+                    new Binary(BinaryOperator.GT, new ColumnValue("a", DataType.INT), new LiteralInt(2)),
+                    new Binary(BinaryOperator.LT, new ColumnValue("a", DataType.INT), new LiteralInt(5))
 
-    ));
+            ));
     assertUnorderedQueryResult(engine, testTable, query2,
             new int[][]{
                     {3,4}
@@ -138,9 +138,9 @@ public class ExecutionTest {
 
     PlanNode query3 = new SelectionNode(
             new TableScanNode(testTable, List.of("a", "b")),
-            new Expression.Binary(BinaryOperator.OR,
-                    new Expression.Binary(BinaryOperator.GE, new Expression.ColumnValue("a", DataType.INT), new LiteralInt(4)),
-                    new Expression.Binary(BinaryOperator.GE, new Expression.ColumnValue("b", DataType.INT), new LiteralInt(9))
+            new Binary(BinaryOperator.OR,
+                    new Binary(BinaryOperator.GE, new ColumnValue("a", DataType.INT), new LiteralInt(4)),
+                    new Binary(BinaryOperator.GE, new ColumnValue("b", DataType.INT), new LiteralInt(9))
 
             ));
     assertUnorderedQueryResult(engine, testTable, query3,
@@ -161,6 +161,7 @@ public class ExecutionTest {
     PlanNode countQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b")),
             List.of(new Aggregate.CountStar()),
+            List.of("agg_0"),
             List.of("a")
     );
     assertUnorderedQueryResult(engine, testTable, countQuery, new int[][]{
@@ -170,7 +171,8 @@ public class ExecutionTest {
 
     PlanNode sumQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b")),
-            List.of(new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT))),
+            List.of(new Aggregate.Sum(new ColumnValue("b", DataType.INT))),
+            List.of("agg_0"),
             List.of("a")
     );
     assertUnorderedQueryResult(engine, testTable, sumQuery, new int[][]{
@@ -180,7 +182,8 @@ public class ExecutionTest {
 
     PlanNode avgQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b")),
-            List.of(new Aggregate.Avg(new Expression.ColumnValue("b", DataType.INT))),
+            List.of(new Aggregate.Avg(new ColumnValue("b", DataType.INT))),
+            List.of("agg_0"),
             List.of("a")
     );
     assertUnorderedQueryResult(engine, testTable, avgQuery, new Object[]{
@@ -191,9 +194,10 @@ public class ExecutionTest {
     PlanNode multiAggQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b", "c")),
             List.of(
-                    new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT)),
-                    new Aggregate.Avg(new Expression.ColumnValue("c", DataType.DOUBLE))
+                    new Aggregate.Sum(new ColumnValue("b", DataType.INT)),
+                    new Aggregate.Avg(new ColumnValue("c", DataType.DOUBLE))
             ),
+            List.of("agg_0", "agg_1"),
             List.of("a")
     );
     assertUnorderedQueryResult(engine, testTable, multiAggQuery, new Object[]{
@@ -204,15 +208,73 @@ public class ExecutionTest {
     PlanNode multiKeyQuery = new AggregationNode(
             new TableScanNode(testTable, List.of("a", "b", "c")),
             List.of(
-                    new Aggregate.Sum(new Expression.ColumnValue("b", DataType.INT))
+                    new Aggregate.Sum(new ColumnValue("b", DataType.INT))
             ),
+            List.of("agg_0"),
             List.of("a", "c")
     );
     assertUnorderedQueryResult(engine, testTable, multiKeyQuery,
             new Object[]{
-            new int[]{1, 1, 2},
-            new double[]{1, 2, 2},
-            new int[]{6, 6, 18}
+                    new int[]{1, 1, 2},
+                    new double[]{1, 2, 2},
+                    new int[]{6, 6, 18}
+            });
+  }
+
+  @ParameterizedTest
+  @EnumSource(ExecutionEngine.class)
+  void having(ExecutionEngine engine) {
+    Table testTable = createTable(
+            new int[]{1, 1, 1, 2, 2},
+            new int[]{2, 4, 6, 8, 10},
+            new double[]{1, 1, 2, 2, 2}
+    );
+    PlanNode query = new SelectionNode(
+            new AggregationNode(
+                    new TableScanNode(testTable, List.of("a", "b")),
+                    List.of(new Aggregate.Sum(new ColumnValue("b", DataType.INT))),
+                    List.of("agg_0"),
+                    List.of("a")
+            ),
+            new Binary(BinaryOperator.GT, new ColumnValue("agg_0", DataType.INT), new LiteralInt(15))
+    );
+    assertUnorderedQueryResult(engine, testTable, query, new int[][] {
+            {2},
+            {18}
+    });
+  }
+
+  @ParameterizedTest
+  @EnumSource(ExecutionEngine.class)
+  void nestedSelectionsTest(ExecutionEngine engine) {
+    Table testTable = createTable(
+            new int[]{1, 1, 1, 2, 2, 3, 3, 4, 4},
+            new int[]{2, 4, 6, 8, 10, 10, 10, 5, 5},
+            new double[]{1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}
+    );
+
+    PlanNode scan = new TableScanNode(testTable, List.of("a", "b", "c"));
+
+    PlanNode where1 = new SelectionNode(scan,
+            new Binary(BinaryOperator.GT, new ColumnValue("c", DataType.DOUBLE), new LiteralDouble(0.0)));
+
+    PlanNode where2 = new SelectionNode(where1,
+            new Binary(BinaryOperator.GT, new ColumnValue("a", DataType.INT), new LiteralInt(1)));
+
+    PlanNode agg = new AggregationNode(where2,
+            List.of(new Aggregate.Sum(new ColumnValue("b", DataType.INT))),
+            List.of("agg_0"),
+            List.of("a"));
+
+    PlanNode having1 = new SelectionNode(agg,
+            new Binary(BinaryOperator.GT, new ColumnValue("agg_0", DataType.INT), new LiteralInt(10)));
+
+    PlanNode query = new SelectionNode(having1,
+            new Binary(BinaryOperator.LT, new ColumnValue("agg_0", DataType.INT), new LiteralInt(25)));
+
+    assertUnorderedQueryResult(engine, testTable, query, new int[][] {
+            {2, 3},
+            {18, 20}
     });
   }
 
@@ -224,12 +286,12 @@ public class ExecutionTest {
     );
     PlanNode query = new SelectionNode(
             new TableScanNode(testTable, List.of("a")),
-            new Expression.Binary(BinaryOperator.LE, new Expression.ColumnValue("a", DataType.STRING), new Expression.LiteralString("aab"))
+            new Binary(BinaryOperator.LE, new ColumnValue("a", DataType.STRING), new Expression.LiteralString("aab"))
     );
     assertUnorderedQueryResult(engine, testTable, query,
             new String[][]{
-            {"a", "aa", "aab"}
-    });
+                    {"a", "aa", "aab"}
+            });
   }
 
 }

@@ -7,6 +7,7 @@ import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.TableScanNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TableScanTranslator implements NodeTranslator {
@@ -15,6 +16,8 @@ public class TableScanTranslator implements NodeTranslator {
 
   private final NodeTranslator parent;
 
+  int inputRowCountId;
+
   public TableScanTranslator(TableScanNode planNode, NodeTranslator parent) {
     this.planNode = planNode;
     this.parent = parent;
@@ -22,35 +25,42 @@ public class TableScanTranslator implements NodeTranslator {
 
   @Override
   public void produce(TranslationContext ctx) {
+    inputRowCountId = ctx.nextId();
     ctx.prelude().append(
-            "int inputRowCount = table.getColumn(\"%s\").length();\n".formatted(
-                    planNode.columnNames().getFirst()
+            "int inputRowCount_%d = table.getColumn(\"%s\").length();\n".formatted(
+                    inputRowCountId, planNode.columnNames().getFirst()
             )
     );
     ctx.prelude().append("\n");
+    List<String> columnArrayNames = new ArrayList<>();
+    int arr_id = ctx.nextId();
     for (String columnName : planNode.columnNames()) {
       Attribute attribute = planNode.table().getAttribute(columnName);
       String typeName = JavaCodeGen.getTypeName(attribute.type());
+      String columnArrayName = "%s_arr_%d".formatted(columnName, arr_id);
+      columnArrayNames.add(columnArrayName);
       String attributeName = attribute.name();
       String capitalizedTypeName = JavaCodeGen.getCapitalizedTypeName(attribute.type());
       ctx.prelude().append(
               "%s[] %s = table.get%sColumnValues(\"%s\");\n".formatted(
-                      typeName, attributeName, capitalizedTypeName, attributeName
+                      typeName, columnArrayName, capitalizedTypeName, attributeName
               )
       );
     }
 
-    ctx.code().append("for (int i = 0; i < inputRowCount; i++) {\n");
-    ctx.setCurrentIndexVar("i");
-    List<String> columnNames = planNode.columnNames().stream()
-            .map(colName -> "%s[%s]".formatted(colName, ctx.currentIndexVar()))
-            .toList();
-    parent.consume(ctx, columnNames);
+    String loopVar = "i_" + ctx.nextId();
+    ctx.code().append("for (int %s = 0; %s < inputRowCount_%d; %s++) {\n".formatted(loopVar, loopVar, inputRowCountId, loopVar));
+    for (int i = 0; i < planNode.columnNames().size(); i++) {
+      String columnSymbolName = "%s[%s]".formatted(columnArrayNames.get(i), loopVar);
+      String colName = planNode.outputSchema()[i].name();
+      ctx.declareSymbol(colName, columnSymbolName);
+    }
+    parent.consume(ctx);
     ctx.code().append("}\n");
   }
 
   @Override
-  public void consume(TranslationContext ctx, List<String> inputColumns) {
+  public void consume(TranslationContext ctx) {
 
   }
 

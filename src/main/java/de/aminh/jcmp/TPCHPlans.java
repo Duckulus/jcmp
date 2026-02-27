@@ -74,6 +74,16 @@ public class TPCHPlans {
                     new Aggregate.Avg(colDiscount),
                     new Aggregate.CountStar()
             ),
+            List.of(
+                    "sum_qty",
+                    "sum_base_price",
+                    "sum_disc_price",
+                    "sum_charge",
+                    "avg_qty",
+                    "avg_price",
+                    "avg_disc",
+                    "count_order"
+            ),
             List.of("l_returnflag", "l_linestatus")
     );
   }
@@ -109,6 +119,7 @@ public class TPCHPlans {
     return new AggregationNode(
             selection,
             List.of(new Aggregate.Sum(revenueCalculation)),
+            List.of("revenue"),
             List.of()
     );
   }

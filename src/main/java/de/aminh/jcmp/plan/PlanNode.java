@@ -16,7 +16,7 @@ public sealed interface PlanNode {
 
   }
 
-  record ProjectionNode(PlanNode child, Expression[] expressions) implements PlanNode {
+  record ProjectionNode(PlanNode child, Expression[] expressions, List<String> columnAliases) implements PlanNode {
 
   }
 
@@ -38,7 +38,7 @@ public sealed interface PlanNode {
   }
 
   // TODO aggregation should support arbitrary expressions as keys
-  record AggregationNode(PlanNode child, List<Aggregate> aggregates, List<String> keys) implements PlanNode {
+  record AggregationNode(PlanNode child, List<Aggregate> aggregates, List<String> aggregateColumnAliases, List<String> keys) implements PlanNode {
 
   }
 
@@ -53,7 +53,7 @@ public sealed interface PlanNode {
           attributes.add(keyAttribute);
         }
         for (int i = 0; i < aggregationNode.aggregates.size(); i++) {
-          attributes.add(new Attribute("agg_" + i, aggregationNode.aggregates.get(i).outputType()));
+          attributes.add(new Attribute(aggregationNode.aggregateColumnAliases.get(i), aggregationNode.aggregates.get(i).outputType()));
         }
         yield attributes.toArray(Attribute[]::new);
       }
@@ -61,7 +61,7 @@ public sealed interface PlanNode {
       case ProjectionNode projectionNode ->
               Streams.mapWithIndex(Arrays.stream(projectionNode.expressions), (exp, i) -> {
                 assert exp != null;
-                return new Attribute("col_" + i, exp.type());
+                return new Attribute(projectionNode.columnAliases.get((int) i), exp.type());
               }).toArray(Attribute[]::new);
       case SelectionNode selectionNode -> selectionNode.child.outputSchema();
       case SingleRowNode _ -> new Attribute[0];
