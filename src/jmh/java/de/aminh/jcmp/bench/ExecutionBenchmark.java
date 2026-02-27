@@ -1,5 +1,6 @@
 package de.aminh.jcmp.bench;
 
+import de.aminh.jcmp.Main;
 import de.aminh.jcmp.TPCHPlans;
 import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryTranspiler;
@@ -31,7 +32,7 @@ public class ExecutionBenchmark {
 
   @Setup(Level.Trial)
   public void setup() {
-    tpcTable = TPCHDataLoader.loadBinaryData("tpch_sf1.bin");
+    tpcTable = TPCHDataLoader.loadBinaryData(Main.INPUT_FILE);
 
     node = switch (tpchQuery) {
       case "Q1" -> TPCHPlans.q1(tpcTable);

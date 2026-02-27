@@ -1,5 +1,6 @@
 package de.aminh.jcmp.data.tpch;
 
+import de.aminh.jcmp.Main;
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;
 
@@ -52,7 +53,21 @@ public class TPCHDataLoader {
       Map<String, Column> allColumns = new HashMap<>();
       for(TPCHSchema schema : TPCHSchema.values()) {
         for(Attribute attribute : schema.getAttributes()) {
-          Column column = attribute.type().createColumn(in.readInt());
+          int columnLength = in.readInt();
+          if (!Main.COLUMN_WHITELIST.contains(attribute.name())) {
+            switch (attribute.type()) {
+              case INT -> in.skipNBytes((long) columnLength * Integer.BYTES);
+              case DOUBLE -> in.skipNBytes((long) columnLength * Double.BYTES);
+              case STRING -> {
+                for (int i = 0; i < columnLength; i++) {
+                  int utfLength = in.readUnsignedShort();
+                  in.skipNBytes(utfLength);
+                }
+              }
+            }
+            continue;
+          }
+          Column column = attribute.type().createColumn(columnLength);
           allColumns.put(attribute.name(), column);
           switch (column) {
             case Column.IntColumn(int[] values) -> {

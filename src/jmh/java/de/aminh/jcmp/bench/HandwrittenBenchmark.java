@@ -1,5 +1,6 @@
 package de.aminh.jcmp.bench;
 
+import de.aminh.jcmp.Main;
 import de.aminh.jcmp.TPCHHandwritten;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
@@ -20,7 +21,7 @@ public class HandwrittenBenchmark {
 
   @Setup(Level.Trial)
   public void setup() {
-    tpcTable = TPCHDataLoader.loadBinaryData("tpch_sf1.bin");
+    tpcTable = TPCHDataLoader.loadBinaryData(Main.INPUT_FILE);
   }
 
   @Benchmark
