@@ -1,5 +1,7 @@
 package de.aminh.jcmp;
 
+import de.aminh.jcmp.compilation.CompiledQuery;
+import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
 import de.aminh.jcmp.execution.VectorizedExecutor;
@@ -48,7 +50,12 @@ public class Main {
     long currentTimeMillis = System.currentTimeMillis();
     executor.init();
     IO.println(executor.next());
-    IO.println("%dms".formatted(System.currentTimeMillis() - currentTimeMillis));
+    IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
+
+    CompiledQuery compiled = JavaQueryTranspiler.compile(table, query);
+    currentTimeMillis = System.currentTimeMillis();
+    IO.println(compiled.execute(table));
+    IO.println("Compiled: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
   }
 
 }

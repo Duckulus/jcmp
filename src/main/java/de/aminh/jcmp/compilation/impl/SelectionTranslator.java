@@ -28,13 +28,13 @@ public class SelectionTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
     ctx.code().append(
             "if (%s) {\n".formatted(
                     JavaCodeGen.translateExpression(planNode.predicate(), ctx)
             )
     );
-    parent.consume(ctx);
+    parent.consume(ctx, this);
     ctx.code().append("}\n");
   }
 

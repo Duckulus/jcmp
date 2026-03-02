@@ -1,8 +1,12 @@
 package de.aminh.jcmp.compilation;
 
+import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.exceptions.TypeException;
 import de.aminh.jcmp.plan.Expression;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class JavaCodeGen {
 
@@ -82,6 +86,57 @@ public class JavaCodeGen {
       case DOUBLE -> "toDoubleArray()";
       case STRING -> "toArray(new String[0])";
     };
+  }
+
+  public static String generateDataClass(String className, List<String> fieldNames, List<DataType> fieldTypes) {
+    if (fieldNames.size() != fieldTypes.size()) {
+      throw new IllegalArgumentException("fieldNames and fieldTypes must have the same size");
+    }
+
+    StringBuilder attributes = new StringBuilder();
+    List<String> equalsComps = new ArrayList<>();
+
+    for (int i = 0; i < fieldNames.size(); i++) {
+      String name = fieldNames.get(i);
+      DataType type = fieldTypes.get(i);
+
+      attributes.append(JavaCodeGen.getTypeName(type))
+              .append(" ")
+              .append(name)
+              .append(";\n  ");
+
+      if (type == DataType.STRING) {
+        equalsComps.add("Objects.equals(this.%s, that.%s)".formatted(name, name));
+      } else {
+        equalsComps.add("this.%s == that.%s".formatted(name, name));
+      }
+    }
+
+    String equalsComparisons = equalsComps.isEmpty() ? "true" : String.join(" && ", equalsComps);
+    String hashValues = String.join(", ", fieldNames);
+
+    return """
+        class %s {
+          %s
+          @Override
+          public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            %s that = (%s) o;
+            return %s;
+          }
+          @Override
+          public int hashCode() {
+            return Objects.hash(%s);
+          }
+        }
+        """.formatted(className, attributes.toString(), className, className, equalsComparisons, hashValues);
+  }
+
+  public static String generateDataClass(String className, List<Attribute> attributes) {
+    List<String> fieldNames = attributes.stream().map(Attribute::name).toList();
+    List<DataType> fieldTypes = attributes.stream().map(Attribute::type).toList();
+    return generateDataClass(className, fieldNames, fieldTypes);
   }
 
 }

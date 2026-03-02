@@ -60,7 +60,7 @@ public class RootTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
     Attribute[] outputSchema = input.getPlanNode().outputSchema();
     for(int i = 0; i < outputSchema.length; i++) {
       String symbol = ctx.resolveSymbol(outputSchema[i].name());

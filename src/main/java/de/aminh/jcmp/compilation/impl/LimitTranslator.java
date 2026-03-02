@@ -31,14 +31,14 @@ public class LimitTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
     ctx.code().append("""
             if (limit_%d >= %d) {
               break;
             }
             limit_%d++;
             """.formatted(limitId, planNode.limit(), limitId));
-    parent.consume(ctx);
+    parent.consume(ctx, this);
   }
 
   @Override

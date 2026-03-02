@@ -6,7 +6,7 @@ public interface NodeTranslator {
 
   void produce(TranslationContext ctx);
 
-  void consume(TranslationContext ctx);
+  void consume(TranslationContext ctx, NodeTranslator caller);
 
   PlanNode getPlanNode();
 

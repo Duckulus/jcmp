@@ -53,41 +53,17 @@ public class HashAggregationTranslator implements NodeTranslator {
   @Override
   public void produce(TranslationContext ctx) {
     aggregationId = ctx.nextId();
-    List<String> keyVars = planNode.keys().stream().map(key -> "%s %s".formatted(
-            JavaCodeGen.getTypeName(ctx.table().getAttribute(key).type()), key
-    )).toList();
-    String attributes = String.join(";\n   ", keyVars) + ";";
-    String equalsComparisons;
-    if (planNode.keys().isEmpty()) {
-      equalsComparisons = "true";
-    } else {
-      equalsComparisons = planNode.keys().stream().map(key -> {
-        if (ctx.table().getAttribute(key).type() == DataType.STRING) {
-          return "Objects.equals(this.%s, that.%s)".formatted(key, key);
-        } else {
-          return "this.%s == that.%s".formatted(key, key);
-        }
-      }).collect(Collectors.joining(" && "));
-    }
-    String hashValues = String.join(", ", planNode.keys());
+    List<String> keyNames = planNode.keys();
+    List<DataType> keyTypes = keyNames.stream()
+            .map(key -> ctx.table().getAttribute(key).type())
+            .toList();
+
+    String classDefinition = JavaCodeGen.generateDataClass(compoundKeyClass(), keyNames, keyTypes);
+
+    ctx.prelude().append(classDefinition);
     ctx.prelude().append("""
-            class %s {
-              %s
-            
-              @Override
-              public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                %s that = (%s) o;
-                return %s;
-              }
-              @Override
-              public int hashCode() {
-                return Objects.hash(%s);
-              }
-            }
-            %s %s = new %s();
-            """.formatted(compoundKeyClass(), attributes, compoundKeyClass(), compoundKeyClass(), equalsComparisons, hashValues, compoundKeyClass(), lookupKeyVar(), compoundKeyClass()));
+        %s %s = new %s();
+        """.formatted(compoundKeyClass(), lookupKeyVar(), compoundKeyClass()));
 
     String aggregateAttributes = Streams.mapWithIndex(planNode.aggregates().stream(), (Aggregate agg, long i) ->
             {
@@ -140,12 +116,12 @@ public class HashAggregationTranslator implements NodeTranslator {
       String outputColName = planNode.outputSchema()[planNode.keys().size() + i].name();
       ctx.declareSymbol(outputColName, varName);
     }
-    parent.consume(ctx);
+    parent.consume(ctx, this);
     ctx.code().append("}\n\n");
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
     ctx.code().append("%s state;\n".formatted(stateClass()));
 
     String fastPath = "state = %s;".formatted(lastStateVar());

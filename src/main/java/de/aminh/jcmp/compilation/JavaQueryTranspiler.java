@@ -103,7 +103,14 @@ public class JavaQueryTranspiler {
       }
       case PlanNode.SingleRowNode singleRowNode -> new SingleRowTranslator(singleRowNode, parent);
       case PlanNode.TableScanNode tableScanNode -> new TableScanTranslator(tableScanNode, parent);
-      case PlanNode.JoinNode joinNode -> null;
+      case PlanNode.JoinNode joinNode -> {
+        HashJoinTranslator hashJoinTranslator = new HashJoinTranslator(joinNode, parent);
+        NodeTranslator leftChild = preparePlan(joinNode.leftChild(), hashJoinTranslator);
+        NodeTranslator rightChild = preparePlan(joinNode.rightChild(), hashJoinTranslator);
+        hashJoinTranslator.setLeftInput(leftChild);
+        hashJoinTranslator.setRightInput(rightChild);
+        yield hashJoinTranslator;
+      }
     };
   }
 

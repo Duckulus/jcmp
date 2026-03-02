@@ -55,12 +55,12 @@ public class TableScanTranslator implements NodeTranslator {
       String colName = planNode.outputSchema()[i].name();
       ctx.declareSymbol(colName, columnSymbolName);
     }
-    parent.consume(ctx);
+    parent.consume(ctx, this);
     ctx.code().append("}\n");
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
 
   }
 

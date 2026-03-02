@@ -29,16 +29,17 @@ public class ProjectionTranslator implements NodeTranslator {
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
     for (int i = 0; i < planNode.expressions().length; i++) {
       String variableName = "proj" + ctx.nextId();
       String outputColName = planNode.outputSchema()[i].name();
-      ctx.declareSymbol(outputColName, variableName);
       Expression expr = planNode.expressions()[i];
+      String projectedValue = JavaCodeGen.translateExpression(expr, ctx);
       ctx.code().append("%s %s = %s;\n"
-              .formatted(JavaCodeGen.getTypeName(expr.type()), variableName, JavaCodeGen.translateExpression(expr, ctx)));
+              .formatted(JavaCodeGen.getTypeName(expr.type()), variableName, projectedValue));
+      ctx.declareSymbol(outputColName, variableName);
     }
-    parent.consume(ctx);
+    parent.consume(ctx, this);
   }
 
   @Override

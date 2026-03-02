@@ -18,11 +18,11 @@ public class SingleRowTranslator implements NodeTranslator {
 
   @Override
   public void produce(TranslationContext ctx) {
-    parent.consume(ctx);
+    parent.consume(ctx, this);
   }
 
   @Override
-  public void consume(TranslationContext ctx) {
+  public void consume(TranslationContext ctx, NodeTranslator caller) {
 
   }
 
