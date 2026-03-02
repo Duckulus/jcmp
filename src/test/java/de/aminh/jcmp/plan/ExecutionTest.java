@@ -294,4 +294,54 @@ public class ExecutionTest {
             });
   }
 
+  @ParameterizedTest
+  @EnumSource(ExecutionEngine.class)
+  void join(ExecutionEngine engine) {
+    Table testTable = createTable(
+            new int[]{1, 2, 3, 4},
+            new int[]{10, 20, 30, 40},
+            new int[]{2, 3, 3, 5},
+            new int[]{200, 300, 301, 500}
+    );
+
+    PlanNode leftScan = new TableScanNode(testTable, List.of("a", "b"));
+    PlanNode rightScan = new TableScanNode(testTable, List.of("c", "d"));
+
+    PlanNode join1 = new JoinNode(
+            leftScan,
+            rightScan,
+            List.of(new ColumnValue("a", DataType.INT)),
+            List.of(new ColumnValue("c", DataType.INT)),
+            null
+    );
+
+    assertUnorderedQueryResult(engine, testTable, join1, new int[][]{
+            {2, 3, 3},
+            {20, 30, 30},
+            {2, 3, 3},
+            {200, 300, 301}
+    });
+
+    PlanNode join2 = new JoinNode(
+            leftScan,
+            rightScan,
+            List.of(new ColumnValue("a", DataType.INT)),
+            List.of(new ColumnValue("c", DataType.INT)),
+            new Binary(
+                    BinaryOperator.LT,
+                    new ColumnValue("d", DataType.INT),
+                    new LiteralInt(301)
+            )
+    );
+
+    assertUnorderedQueryResult(engine, testTable, join2, new int[][]{
+            {2, 3},
+            {20, 30},
+            {2, 3},
+            {200, 300}
+    });
+
+
+  }
+
 }

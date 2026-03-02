@@ -3,6 +3,7 @@ package de.aminh.jcmp.execution.impl;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
+import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.LimitNode;
 
 public class LimitExecutor implements VectorizedExecutor {
@@ -46,7 +47,11 @@ public class LimitExecutor implements VectorizedExecutor {
       emitted += batch.size();
       return new RecordBatch(batch.size(), batch.attributes(), batch.columns());
     }
+  }
 
+  @Override
+  public PlanNode planNode() {
+    return planNode;
   }
 
 }

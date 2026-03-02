@@ -6,6 +6,7 @@ import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.ColumnNotFoundException;
 import de.aminh.jcmp.execution.VectorizedExecutor;
+import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.TableScanNode;
 
 import java.util.List;
@@ -65,6 +66,11 @@ public class TableScanExecutor implements VectorizedExecutor {
     }
     cursor += rowCount;
     return new RecordBatch(rowCount, inputAttributes, outputColumns);
+  }
+
+  @Override
+  public PlanNode planNode() {
+    return planNode;
   }
 
 }

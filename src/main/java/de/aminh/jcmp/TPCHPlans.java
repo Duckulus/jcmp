@@ -88,6 +88,106 @@ public class TPCHPlans {
     );
   }
 
+  public static PlanNode q5(Table table) {
+    PlanNode regionScan = new PlanNode.SelectionNode(
+            new PlanNode.TableScanNode(table, List.of("r_regionkey", "r_name")),
+            new Expression.Binary(BinaryOperator.EQUALS,
+                    new Expression.ColumnValue("r_name", DataType.STRING),
+                    new Expression.LiteralString("ASIA")
+            )
+    );
+
+    PlanNode nationScan = new PlanNode.TableScanNode(table, List.of("n_nationkey", "n_regionkey", "n_name"));
+
+    PlanNode asianNations = new PlanNode.JoinNode(
+            regionScan,
+            nationScan,
+            List.of(new Expression.ColumnValue("r_regionkey", DataType.INT)),
+            List.of(new Expression.ColumnValue("n_regionkey", DataType.INT)),
+            null
+    );
+
+    PlanNode customerScan = new PlanNode.TableScanNode(table, List.of("c_custkey", "c_nationkey"));
+
+    PlanNode filteredCustomer = new PlanNode.JoinNode(
+            asianNations,
+            customerScan,
+            List.of(new Expression.ColumnValue("n_nationkey", DataType.INT)),
+            List.of(new Expression.ColumnValue("c_nationkey", DataType.INT)),
+            null
+    );
+
+    PlanNode ordersScan = new PlanNode.SelectionNode(
+            new PlanNode.TableScanNode(table, List.of("o_orderkey", "o_custkey", "o_orderdate")),
+            new Expression.Binary(Expression.BinaryOperator.AND,
+                    new Expression.Binary(BinaryOperator.GE,
+                            new Expression.ColumnValue("o_orderdate", DataType.STRING),
+                            new Expression.LiteralString("1994-01-01")
+                    ),
+                    new Expression.Binary(Expression.BinaryOperator.LT,
+                            new Expression.ColumnValue("o_orderdate", DataType.STRING),
+                            new Expression.LiteralString("1995-01-01")
+                    )
+            )
+    );
+
+    PlanNode join1 = new PlanNode.JoinNode(
+            filteredCustomer,
+            ordersScan,
+            List.of(new Expression.ColumnValue("c_custkey", DataType.INT)),
+            List.of(new Expression.ColumnValue("o_custkey", DataType.INT)),
+            null
+    );
+
+    PlanNode lineitemScan = new PlanNode.TableScanNode(table, List.of("l_orderkey", "l_suppkey", "l_extendedprice", "l_discount"));
+
+    PlanNode join2 = new PlanNode.JoinNode(
+            join1,
+            lineitemScan,
+            List.of(new Expression.ColumnValue("o_orderkey", DataType.INT)),
+            List.of(new Expression.ColumnValue("l_orderkey", DataType.INT)),
+            null
+    );
+
+    PlanNode supplierScan = new PlanNode.TableScanNode(table, List.of("s_suppkey", "s_nationkey"));
+
+    PlanNode join3 = new PlanNode.JoinNode(
+            supplierScan,
+            join2,
+            List.of(
+                    new Expression.ColumnValue("s_suppkey", DataType.INT),
+                    new Expression.ColumnValue("s_nationkey", DataType.INT)
+            ),
+            List.of(
+                    new Expression.ColumnValue("l_suppkey", DataType.INT),
+                    new Expression.ColumnValue("c_nationkey", DataType.INT)
+            ),
+            null
+    );
+
+    PlanNode preAggProjection = new PlanNode.ProjectionNode(
+            join3,
+            new Expression[]{
+                    new Expression.ColumnValue("n_name", DataType.STRING),
+                    new Expression.Binary(Expression.BinaryOperator.TIMES,
+                            new Expression.ColumnValue("l_extendedprice", DataType.DOUBLE),
+                            new Expression.Binary(Expression.BinaryOperator.MINUS,
+                                    new Expression.LiteralDouble(1.0),
+                                    new Expression.ColumnValue("l_discount", DataType.DOUBLE)
+                            )
+                    )
+            },
+            List.of("n_name", "revenue_computed")
+    );
+
+    return new PlanNode.AggregationNode(
+            preAggProjection,
+            List.of(new Aggregate.Sum(new Expression.ColumnValue("revenue_computed", DataType.DOUBLE))),
+            List.of("revenue"),
+            List.of("n_name")
+    );
+  }
+
   public static PlanNode q6(Table table) {
     PlanNode scan = new TableScanNode(
             table,

@@ -10,6 +10,7 @@ import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
 import de.aminh.jcmp.plan.Aggregate;
 import de.aminh.jcmp.plan.Expression;
+import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.AggregationNode;
 
 import java.util.Arrays;
@@ -22,7 +23,7 @@ import java.util.Map;
  */
 public class HashAggregationExecutor implements VectorizedExecutor {
 
-  public static class CompoundKey {
+  static class CompoundKey {
     Object[] values;
 
     public CompoundKey(Object[] values) {
@@ -58,11 +59,15 @@ public class HashAggregationExecutor implements VectorizedExecutor {
   private final AggregationNode planNode;
   private final VectorizedExecutor child;
 
+  private final Attribute[] inputAttributes;
+
   private boolean done = false;
 
   public HashAggregationExecutor(AggregationNode planNode, VectorizedExecutor child) {
     this.planNode = planNode;
     this.child = child;
+
+    inputAttributes = child.planNode().outputSchema();
   }
 
   @Override
@@ -81,8 +86,6 @@ public class HashAggregationExecutor implements VectorizedExecutor {
     int keyColumnCount = planNode.keys().size();
     int[] keyColumnIndexes = null;
 
-    Attribute[] inputAttributes = null;
-
     RecordBatch batch;
     while ((batch = child.next()) != null) {
       if (keyColumnIndexes == null) {
@@ -100,9 +103,6 @@ public class HashAggregationExecutor implements VectorizedExecutor {
             break;
           }
         }
-      }
-      if (inputAttributes == null) {
-        inputAttributes = batch.attributes();
       }
 
       Column[] keyColumns = new Column[keyColumnCount];
@@ -168,7 +168,7 @@ public class HashAggregationExecutor implements VectorizedExecutor {
     Attribute[] outputAttributes = new Attribute[keyColumnCount + aggregateCount];
     Column[] outputColumns = new Column[keyColumnCount + aggregateCount];
     for (int i = 0; i < keyColumnCount; i++) {
-      assert inputAttributes != null; // if keyColumnCount > 0, then there was at least one batch
+      assert keyColumnIndexes != null;
       Attribute inputAttribute = inputAttributes[keyColumnIndexes[i]];
       outputAttributes[i] = inputAttribute;
       outputColumns[i] = inputAttribute.type().createColumn(outputRows);
@@ -203,6 +203,11 @@ public class HashAggregationExecutor implements VectorizedExecutor {
 
     done = true;
     return new RecordBatch(outputRows, outputAttributes, outputColumns);
+  }
+
+  @Override
+  public PlanNode planNode() {
+    return planNode;
   }
 
 }

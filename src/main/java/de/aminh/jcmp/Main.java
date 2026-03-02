@@ -1,10 +1,10 @@
 package de.aminh.jcmp;
 
-import de.aminh.jcmp.compilation.CompiledQuery;
-import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
-import de.aminh.jcmp.execution.impl.PrintResultExecutor;
+import de.aminh.jcmp.execution.VectorizedExecutor;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.Planner;
 
 import java.util.Set;
 
@@ -19,7 +19,21 @@ public class Main {
           "l_extendedprice",
           "l_discount",
           "l_tax",
-          "l_shipdate"
+          "l_shipdate",
+          "l_orderkey",
+          "l_suppkey",
+          "r_regionkey",
+          "r_name",
+          "n_nationkey",
+          "n_regionkey",
+          "n_name",
+          "s_suppkey",
+          "s_nationkey",
+          "c_custkey",
+          "c_nationkey",
+          "o_orderkey",
+          "o_custkey",
+          "o_orderdate"
   );
 
   static void main() {
@@ -28,23 +42,13 @@ public class Main {
 //    TPCHDataLoader.writeBinaryData(table, "tpch_sf5.bin");
     TPCHTable table = TPCHDataLoader.loadBinaryData(INPUT_FILE);
 
-    long start = System.currentTimeMillis();
-    PrintResultExecutor.print(
-            TPCHPlans.q1(table)
-    );
-    IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - start));
+    PlanNode query = TPCHPlans.q5(table);
 
-    start = System.currentTimeMillis();
-    IO.println(TPCHHandwritten.q1(table).toString());
-    IO.println("Handwritten: %dms".formatted(System.currentTimeMillis() - start));
-
-    start = System.currentTimeMillis();
-    CompiledQuery queryInstance = JavaQueryTranspiler.compile(table, TPCHPlans.q1(table));
-    IO.println("Compilation: %dms".formatted(System.currentTimeMillis() - start));
-
-    start = System.currentTimeMillis();
-    IO.println(queryInstance.execute(table));
-    IO.println("Compiled: %dms".formatted(System.currentTimeMillis() - start));
+    VectorizedExecutor executor = Planner.plan(query);
+    long currentTimeMillis = System.currentTimeMillis();
+    executor.init();
+    IO.println(executor.next());
+    IO.println("%dms".formatted(System.currentTimeMillis() - currentTimeMillis));
   }
 
 }

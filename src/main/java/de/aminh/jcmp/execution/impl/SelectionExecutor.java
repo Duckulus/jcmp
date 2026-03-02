@@ -4,6 +4,7 @@ import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Column.IntColumn;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
+import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.PlanNode.SelectionNode;
 
 /**
@@ -48,6 +49,11 @@ public class SelectionExecutor implements VectorizedExecutor {
     }
 
     return new RecordBatch(matches, inputBatch.attributes(), outputColumns);
+  }
+
+  @Override
+  public PlanNode planNode() {
+    return planNode;
   }
 
 }

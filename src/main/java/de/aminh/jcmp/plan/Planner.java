@@ -19,8 +19,8 @@ public class Planner {
         VectorizedExecutor child = plan(projectionNode.child());
         return new ProjectionExecutor(projectionNode, child);
       }
-      case SingleRowNode _ -> {
-        return new SingleRowExecutor();
+      case SingleRowNode singleRowNode -> {
+        return new SingleRowExecutor(singleRowNode);
       }
       case TableScanNode tableScanNode -> {
         return new TableScanExecutor(tableScanNode);
@@ -32,6 +32,11 @@ public class Planner {
       case AggregationNode aggregationNode -> {
         VectorizedExecutor child = plan(aggregationNode.child());
         return new HashAggregationExecutor(aggregationNode, child);
+      }
+      case JoinNode joinNode -> {
+        VectorizedExecutor leftChild = plan(joinNode.leftChild());
+        VectorizedExecutor rightChild = plan(joinNode.rightChild());
+        return new HashJoinExecutor(joinNode, leftChild, rightChild);
       }
     }
   }

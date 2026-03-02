@@ -103,6 +103,7 @@ public class JavaQueryTranspiler {
       }
       case PlanNode.SingleRowNode singleRowNode -> new SingleRowTranslator(singleRowNode, parent);
       case PlanNode.TableScanNode tableScanNode -> new TableScanTranslator(tableScanNode, parent);
+      case PlanNode.JoinNode joinNode -> null;
     };
   }
 

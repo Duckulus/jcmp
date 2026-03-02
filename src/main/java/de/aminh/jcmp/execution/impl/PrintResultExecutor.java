@@ -38,4 +38,10 @@ public class PrintResultExecutor implements VectorizedExecutor {
     }
     return null;
   }
+
+  @Override
+  public PlanNode planNode() {
+    return null;
+  }
+
 }

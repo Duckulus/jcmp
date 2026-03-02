@@ -25,6 +25,18 @@ public record RecordBatch(int size, Attribute[] attributes, Column[] columns) {
     return new RecordBatch(this.size + other.size, this.attributes, newColumns);
   }
 
+  public RecordBatch copyMask(int[] mask) {
+    int matches = 0;
+    for(int value : mask) {
+      if (value == 1) matches++;
+    }
+    Column[] newColumns = new Column[columns.length];
+    for(int i = 0; i < columns.length; i++) {
+      newColumns[i] = columns[i].copyMask(mask, matches);
+    }
+    return new RecordBatch(matches, attributes, newColumns);
+  }
+
   @Override
   public @NonNull String toString() {
     return TablePrinter.format(this, 100);

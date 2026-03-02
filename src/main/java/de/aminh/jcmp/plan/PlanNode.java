@@ -9,6 +9,7 @@ import de.aminh.jcmp.exceptions.TypeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public sealed interface PlanNode {
 
@@ -42,6 +43,11 @@ public sealed interface PlanNode {
 
   }
 
+  record JoinNode(PlanNode leftChild, PlanNode rightChild, List<Expression> leftExprs, List<Expression> rightExprs,
+                  Expression residualFilter) implements PlanNode {
+
+  }
+
   default Attribute[] outputSchema() {
     return switch (this) {
       case AggregationNode aggregationNode -> {
@@ -68,6 +74,10 @@ public sealed interface PlanNode {
       case TableScanNode tableScanNode ->
               tableScanNode.columnNames.stream().map(tableScanNode.table::getAttribute).toArray(Attribute[]::new);
 
+      case JoinNode joinNode -> Stream.concat(
+              Arrays.stream(joinNode.leftChild.outputSchema()),
+              Arrays.stream(joinNode.rightChild.outputSchema())
+      ).toArray(Attribute[]::new);
     };
   }
 

@@ -16,4 +16,12 @@ public enum DataType {
       case STRING -> StringColumn.create(size);
     };
   }
+
+  public ColumnBuilder createColumnBuilder() {
+    return switch (this) {
+      case INT -> new ColumnBuilder.IntColumnBuilder();
+      case DOUBLE -> new ColumnBuilder.DoubleColumnBuilder();
+      case STRING -> new ColumnBuilder.StringColumnBuilder();
+    };
+  }
 }
