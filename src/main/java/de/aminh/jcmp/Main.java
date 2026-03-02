@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class Main {
 
-  public static final String INPUT_FILE = "tpch_sf1.bin";
+  public static final String INPUT_FILE = "tpch_sf5.bin";
 
   public static Set<String> COLUMN_WHITELIST = Set.of(
           "l_returnflag",

@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 5, time = 2)
 public class ExecutionBenchmark {
 
-  @Param({"Q1", "Q6"})
+  @Param({"Q1", "Q5", "Q6"})
   private String tpchQuery;
 
   private Table tpcTable;
@@ -36,6 +36,7 @@ public class ExecutionBenchmark {
 
     node = switch (tpchQuery) {
       case "Q1" -> TPCHPlans.q1(tpcTable);
+      case "Q5" -> TPCHPlans.q5(tpcTable);
       case "Q6" -> TPCHPlans.q6(tpcTable);
       default -> throw new IllegalArgumentException("Unknown query: " + tpchQuery);
     };
