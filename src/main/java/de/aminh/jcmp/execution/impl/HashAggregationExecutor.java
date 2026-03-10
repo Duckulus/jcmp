@@ -8,10 +8,10 @@ import de.aminh.jcmp.data.Column.StringColumn;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.Aggregate;
-import de.aminh.jcmp.plan.Expression;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.AggregationNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedAggregate;
+import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.AggregationNode;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -119,11 +119,11 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         compoundKeys[i] = new CompoundKey(keyValues);
       }
 
-      Column[] evaluatedAggregates = new Column[aggregateCount];
+      Column[] evaluatedVectorizedAggregates = new Column[aggregateCount];
       for(int i = 0; i < aggregateCount; i++) {
-        Expression expr = planNode.aggregates().get(i).expressionOrNull();
+        VectorizedExpression expr = planNode.aggregates().get(i).expressionOrNull();
         if (expr != null) {
-          evaluatedAggregates[i] = expr.eval(batch);
+          evaluatedVectorizedAggregates[i] = expr.eval(batch);
         }
       }
 
@@ -132,29 +132,29 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         aggregateTypes[i] = planNode.aggregates().get(i).expressionType();
       }
 
-      Aggregate[] aggregates = planNode.aggregates().toArray(new Aggregate[0]);
+      VectorizedAggregate[] aggregates = planNode.aggregates().toArray(new VectorizedAggregate[0]);
       for (int i = 0; i < compoundKeys.length; i++) {
         CompoundKey compoundKey = compoundKeys[i];
         AggregationState state = aggregationMap.computeIfAbsent(compoundKey, _ -> new AggregationState(aggregateCount));
         for (int j = 0; j < aggregateCount; j++) {
           switch (aggregates[j]) {
-            case Aggregate.CountStar _ -> state.counts[j] += 1;
-            case Aggregate.Avg(_) -> {
+            case VectorizedAggregate.CountStar _ -> state.counts[j] += 1;
+            case VectorizedAggregate.Avg(_) -> {
               if (aggregateTypes[j] == DataType.INT) {
-                state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
+                state.sumsInt[j] += ((IntColumn) evaluatedVectorizedAggregates[j]).values()[i];
                 state.counts[j] += 1;
               } else if (aggregateTypes[j] == DataType.DOUBLE) {
-                state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
+                state.sumsDouble[j] += ((DoubleColumn) evaluatedVectorizedAggregates[j]).values()[i];
                 state.counts[j] += 1;
               } else {
                 throw new IllegalStateException();
               }
             }
-            case Aggregate.Sum(_) -> {
+            case VectorizedAggregate.Sum(_) -> {
               if (aggregateTypes[j] == DataType.INT) {
-                state.sumsInt[j] += ((IntColumn) evaluatedAggregates[j]).values()[i];
+                state.sumsInt[j] += ((IntColumn) evaluatedVectorizedAggregates[j]).values()[i];
               } else if (aggregateTypes[j] == DataType.DOUBLE) {
-                state.sumsDouble[j] += ((DoubleColumn) evaluatedAggregates[j]).values()[i];
+                state.sumsDouble[j] += ((DoubleColumn) evaluatedVectorizedAggregates[j]).values()[i];
               } else {
                 throw new IllegalStateException();
               }
@@ -189,7 +189,7 @@ public class HashAggregationExecutor implements VectorizedExecutor {
         }
       }
       for (int j = 0; j < aggregateCount; j++) {
-        Aggregate aggregate = planNode.aggregates().get(j);
+        VectorizedAggregate aggregate = planNode.aggregates().get(j);
         DataType exprType = aggregate.expressionType();
         Object value = aggregate.extractValue(entry.getValue(), exprType,j);
         switch (outputColumns[keyColumnCount + j]) {
@@ -206,7 +206,7 @@ public class HashAggregationExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

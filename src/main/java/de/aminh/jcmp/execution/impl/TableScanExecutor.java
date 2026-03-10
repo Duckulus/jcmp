@@ -6,8 +6,8 @@ import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.ColumnNotFoundException;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.TableScanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.TableScanNode;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class TableScanExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

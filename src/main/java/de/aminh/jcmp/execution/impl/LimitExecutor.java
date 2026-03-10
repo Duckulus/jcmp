@@ -3,8 +3,8 @@ package de.aminh.jcmp.execution.impl;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.LimitNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.LimitNode;
 
 public class LimitExecutor implements VectorizedExecutor {
 
@@ -50,7 +50,7 @@ public class LimitExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

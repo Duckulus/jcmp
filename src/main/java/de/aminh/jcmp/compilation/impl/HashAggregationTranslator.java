@@ -5,9 +5,9 @@ import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
 import de.aminh.jcmp.data.DataType;
-import de.aminh.jcmp.plan.Aggregate;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.AggregationNode;
+import de.aminh.jcmp.plan.logical.Aggregate;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode.AggregationNode;
 
 import java.util.List;
 import java.util.stream.Collectors;

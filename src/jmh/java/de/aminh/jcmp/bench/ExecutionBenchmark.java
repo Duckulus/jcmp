@@ -8,7 +8,7 @@ import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode;
 import de.aminh.jcmp.plan.Planner;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;

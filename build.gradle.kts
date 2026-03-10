@@ -2,7 +2,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 plugins {
-    id("java")
+    java
+    application
     id("me.champeau.jmh") version "0.7.3"
 }
 
@@ -24,11 +25,16 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+application {
+    mainClass = "de.aminh.jcmp.Main"
+}
+
 val timestamp: String = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Date())
 tasks.jmh {
     humanOutputFile = project.layout.buildDirectory.file("reports/jmh/human_${timestamp}.txt").get().asFile
     resultsFile = project.layout.buildDirectory.file("reports/jmh/results_${timestamp}.csv").get().asFile
-    profilers = listOf("perfnorm", "perfasm")
+    profilers = listOf("perfnorm:events=power/energy-pkg/")
+//    profilers = listOf("perfasm")
     resultFormat = "CSV"
 }
 

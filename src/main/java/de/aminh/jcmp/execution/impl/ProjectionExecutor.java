@@ -3,9 +3,11 @@ package de.aminh.jcmp.execution.impl;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.Expression;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.ProjectionNode;
+import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.ProjectionNode;
+
+import java.util.List;
 
 public class ProjectionExecutor implements VectorizedExecutor {
 
@@ -29,16 +31,16 @@ public class ProjectionExecutor implements VectorizedExecutor {
       return null;
     }
 
-    Expression[] expressions = planNode.expressions();
-    Column[] outputColumns = new Column[expressions.length];
-    for (int i = 0; i < expressions.length; i++) {
-      outputColumns[i] = expressions[i].eval(batch);
+    List<VectorizedExpression> expressions = planNode.expressions();
+    Column[] outputColumns = new Column[expressions.size()];
+    for (int i = 0; i < outputColumns.length; i++) {
+      outputColumns[i] = expressions.get(i).eval(batch);
     }
     return new RecordBatch(batch.size(), planNode.outputSchema(), outputColumns);
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

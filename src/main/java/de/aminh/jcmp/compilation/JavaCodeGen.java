@@ -3,7 +3,8 @@ package de.aminh.jcmp.compilation;
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.plan.Expression;
+import de.aminh.jcmp.plan.vectorized.expr.BinaryOperator;
+import de.aminh.jcmp.plan.logical.Expression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class JavaCodeGen {
 
   public static String translateExpression(Expression expression, TranslationContext ctx) {
     return switch (expression) {
-      case Expression.Binary(Expression.BinaryOperator oper, Expression left, Expression right) -> {
+      case Expression.Binary(BinaryOperator oper, Expression left, Expression right) -> {
         String operatorSymbol = switch (oper) {
           case PLUS -> "+";
           case MINUS -> "-";

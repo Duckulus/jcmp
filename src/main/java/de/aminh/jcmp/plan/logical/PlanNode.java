@@ -1,4 +1,4 @@
-package de.aminh.jcmp.plan;
+package de.aminh.jcmp.plan.logical;
 
 import com.google.common.collect.Streams;
 import de.aminh.jcmp.Configuration;
@@ -17,7 +17,7 @@ public sealed interface PlanNode {
 
   }
 
-  record ProjectionNode(PlanNode child, Expression[] expressions, List<String> columnAliases) implements PlanNode {
+  record ProjectionNode(PlanNode child, List<Expression> expressions, List<String> columnAliases) implements PlanNode {
 
   }
 
@@ -65,7 +65,7 @@ public sealed interface PlanNode {
       }
       case LimitNode limitNode -> limitNode.child.outputSchema();
       case ProjectionNode projectionNode ->
-              Streams.mapWithIndex(Arrays.stream(projectionNode.expressions), (exp, i) -> {
+              Streams.mapWithIndex(projectionNode.expressions.stream(), (exp, i) -> {
                 assert exp != null;
                 return new Attribute(projectionNode.columnAliases.get((int) i), exp.type());
               }).toArray(Attribute[]::new);

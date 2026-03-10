@@ -4,6 +4,7 @@ import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.*;
 import de.aminh.jcmp.execution.VectorizedExecutor;
+import de.aminh.jcmp.plan.logical.PlanNode;
 
 import java.lang.reflect.Array;
 import java.util.*;

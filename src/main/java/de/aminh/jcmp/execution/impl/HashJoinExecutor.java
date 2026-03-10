@@ -5,8 +5,8 @@ import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.ColumnBuilder;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.JoinNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.JoinNode;
 
 import java.util.*;
 
@@ -133,7 +133,7 @@ public class HashJoinExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

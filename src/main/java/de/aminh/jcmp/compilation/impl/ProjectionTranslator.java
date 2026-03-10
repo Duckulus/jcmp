@@ -3,9 +3,9 @@ package de.aminh.jcmp.compilation.impl;
 import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
-import de.aminh.jcmp.plan.Expression;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.ProjectionNode;
+import de.aminh.jcmp.plan.logical.Expression;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode.ProjectionNode;
 
 public class ProjectionTranslator implements NodeTranslator {
 
@@ -30,10 +30,10 @@ public class ProjectionTranslator implements NodeTranslator {
 
   @Override
   public void consume(TranslationContext ctx, NodeTranslator caller) {
-    for (int i = 0; i < planNode.expressions().length; i++) {
+    for (int i = 0; i < planNode.expressions().size(); i++) {
       String variableName = "proj" + ctx.nextId();
       String outputColName = planNode.outputSchema()[i].name();
-      Expression expr = planNode.expressions()[i];
+      Expression expr = planNode.expressions().get(i);
       String projectedValue = JavaCodeGen.translateExpression(expr, ctx);
       ctx.code().append("%s %s = %s;\n"
               .formatted(JavaCodeGen.getTypeName(expr.type()), variableName, projectedValue));

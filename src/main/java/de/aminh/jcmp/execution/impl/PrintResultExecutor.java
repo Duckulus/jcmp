@@ -2,8 +2,9 @@ package de.aminh.jcmp.execution.impl;
 
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
 import de.aminh.jcmp.plan.Planner;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
 import de.aminh.jcmp.util.TablePrinter;
 
 /**
@@ -40,7 +41,7 @@ public class PrintResultExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return null;
   }
 

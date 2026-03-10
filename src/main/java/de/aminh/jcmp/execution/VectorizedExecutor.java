@@ -1,7 +1,7 @@
 package de.aminh.jcmp.execution;
 
 import de.aminh.jcmp.data.RecordBatch;
-import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
 
 public interface VectorizedExecutor {
 
@@ -9,6 +9,6 @@ public interface VectorizedExecutor {
 
   RecordBatch next();
 
-  PlanNode planNode();
+  VectorizedPlanNode planNode();
 
 }

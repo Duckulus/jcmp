@@ -1,6 +1,6 @@
 package de.aminh.jcmp.compilation;
 
-import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode;
 
 public interface NodeTranslator {
 

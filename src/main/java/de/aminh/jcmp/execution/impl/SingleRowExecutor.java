@@ -4,8 +4,8 @@ import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.SingleRowNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.SingleRowNode;
 
 public class SingleRowExecutor implements VectorizedExecutor {
 
@@ -32,7 +32,7 @@ public class SingleRowExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

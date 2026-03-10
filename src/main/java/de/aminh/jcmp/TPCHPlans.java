@@ -2,16 +2,16 @@ package de.aminh.jcmp;
 
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.Table;
-import de.aminh.jcmp.plan.Aggregate;
-import de.aminh.jcmp.plan.Expression;
-import de.aminh.jcmp.plan.Expression.Binary;
-import de.aminh.jcmp.plan.Expression.BinaryOperator;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.AggregationNode;
-import de.aminh.jcmp.plan.PlanNode.SelectionNode;
-import de.aminh.jcmp.plan.PlanNode.TableScanNode;
+import de.aminh.jcmp.plan.logical.Aggregate;
+import de.aminh.jcmp.plan.vectorized.expr.BinaryOperator;
+import de.aminh.jcmp.plan.logical.Expression;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode.AggregationNode;
+import de.aminh.jcmp.plan.logical.PlanNode.SelectionNode;
+import de.aminh.jcmp.plan.logical.PlanNode.TableScanNode;
 
 import java.util.List;
+
 
 public class TPCHPlans {
 
@@ -26,7 +26,7 @@ public class TPCHPlans {
 
     PlanNode filter = new SelectionNode(
             scan,
-            new Binary(
+            new Expression.Binary(
                     BinaryOperator.LE,
                     new Expression.ColumnValue("l_shipdate", DataType.STRING),
                     new Expression.LiteralString("1998-09-02")
@@ -38,25 +38,25 @@ public class TPCHPlans {
     Expression colDiscount = new Expression.ColumnValue("l_discount", DataType.DOUBLE);
     Expression colTax = new Expression.ColumnValue("l_tax", DataType.DOUBLE);
 
-    Expression oneMinusDiscount = new Binary(
+    Expression oneMinusDiscount = new Expression.Binary(
             BinaryOperator.MINUS,
             new Expression.LiteralDouble(1.0),
             colDiscount
     );
 
-    Expression discountedPrice = new Binary(
+    Expression discountedPrice = new Expression.Binary(
             BinaryOperator.TIMES,
             colPrice,
             oneMinusDiscount
     );
 
-    Expression onePlusTax = new Binary(
+    Expression onePlusTax = new Expression.Binary(
             BinaryOperator.PLUS,
             new Expression.LiteralDouble(1.0),
             colTax
     );
 
-    Expression charge = new Binary(
+    Expression charge = new Expression.Binary(
             BinaryOperator.TIMES,
             discountedPrice,
             onePlusTax
@@ -119,12 +119,12 @@ public class TPCHPlans {
 
     PlanNode ordersScan = new PlanNode.SelectionNode(
             new PlanNode.TableScanNode(table, List.of("o_orderkey", "o_custkey", "o_orderdate")),
-            new Expression.Binary(Expression.BinaryOperator.AND,
+            new Expression.Binary(BinaryOperator.AND,
                     new Expression.Binary(BinaryOperator.GE,
                             new Expression.ColumnValue("o_orderdate", DataType.STRING),
                             new Expression.LiteralString("1994-01-01")
                     ),
-                    new Expression.Binary(Expression.BinaryOperator.LT,
+                    new Expression.Binary(BinaryOperator.LT,
                             new Expression.ColumnValue("o_orderdate", DataType.STRING),
                             new Expression.LiteralString("1995-01-01")
                     )
@@ -167,16 +167,16 @@ public class TPCHPlans {
 
     PlanNode preAggProjection = new PlanNode.ProjectionNode(
             join3,
-            new Expression[]{
+           List.of(
                     new Expression.ColumnValue("n_name", DataType.STRING),
-                    new Expression.Binary(Expression.BinaryOperator.TIMES,
+                    new Expression.Binary(BinaryOperator.TIMES,
                             new Expression.ColumnValue("l_extendedprice", DataType.DOUBLE),
-                            new Expression.Binary(Expression.BinaryOperator.MINUS,
+                            new Expression.Binary(BinaryOperator.MINUS,
                                     new Expression.LiteralDouble(1.0),
                                     new Expression.ColumnValue("l_discount", DataType.DOUBLE)
                             )
                     )
-            },
+           ),
             List.of("n_name", "revenue_computed")
     );
 
@@ -194,23 +194,23 @@ public class TPCHPlans {
             List.of("l_shipdate", "l_discount", "l_quantity", "l_extendedprice")
     );
 
-    Expression dateGe = new Binary(BinaryOperator.GE, new Expression.ColumnValue("l_shipdate", DataType.STRING), new Expression.LiteralString("1994-01-01"));
-    Expression dateLt = new Binary(BinaryOperator.LT, new Expression.ColumnValue("l_shipdate", DataType.STRING), new Expression.LiteralString("1995-01-01"));
-    Expression discountGe = new Binary(BinaryOperator.GE, new Expression.ColumnValue("l_discount", DataType.DOUBLE), new Expression.LiteralDouble(0.05));
-    Expression discountLe = new Binary(BinaryOperator.LE, new Expression.ColumnValue("l_discount", DataType.DOUBLE), new Expression.LiteralDouble(0.07));
-    Expression quantityLt = new Binary(BinaryOperator.LT, new Expression.ColumnValue("l_quantity", DataType.DOUBLE), new Expression.LiteralDouble(24.0));
+    Expression dateGe = new Expression.Binary(BinaryOperator.GE, new Expression.ColumnValue("l_shipdate", DataType.STRING), new Expression.LiteralString("1994-01-01"));
+    Expression dateLt = new Expression.Binary(BinaryOperator.LT, new Expression.ColumnValue("l_shipdate", DataType.STRING), new Expression.LiteralString("1995-01-01"));
+    Expression discountGe = new Expression.Binary(BinaryOperator.GE, new Expression.ColumnValue("l_discount", DataType.DOUBLE), new Expression.LiteralDouble(0.05));
+    Expression discountLe = new Expression.Binary(BinaryOperator.LE, new Expression.ColumnValue("l_discount", DataType.DOUBLE), new Expression.LiteralDouble(0.07));
+    Expression quantityLt = new Expression.Binary(BinaryOperator.LT, new Expression.ColumnValue("l_quantity", DataType.DOUBLE), new Expression.LiteralDouble(24.0));
 
-    Expression filterCondition = new Binary(BinaryOperator.AND,
-            new Binary(BinaryOperator.AND,
-                    new Binary(BinaryOperator.AND, dateGe, dateLt),
-                    new Binary(BinaryOperator.AND, discountGe, discountLe)
+    Expression filterCondition = new Expression.Binary(BinaryOperator.AND,
+            new Expression.Binary(BinaryOperator.AND,
+                    new Expression.Binary(BinaryOperator.AND, dateGe, dateLt),
+                    new Expression.Binary(BinaryOperator.AND, discountGe, discountLe)
             ),
             quantityLt
     );
 
     PlanNode selection = new SelectionNode(scan, filterCondition);
 
-    Expression revenueCalculation = new Binary(
+    Expression revenueCalculation = new Expression.Binary(
             BinaryOperator.TIMES,
             new Expression.ColumnValue("l_extendedprice", DataType.DOUBLE),
             new Expression.ColumnValue("l_discount", DataType.DOUBLE)

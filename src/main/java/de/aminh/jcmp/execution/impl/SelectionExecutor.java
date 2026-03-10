@@ -4,8 +4,8 @@ import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Column.IntColumn;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.SelectionNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.SelectionNode;
 
 /**
  * This executor performs selection (The WHERE clause of an SQL statement)
@@ -52,7 +52,7 @@ public class SelectionExecutor implements VectorizedExecutor {
   }
 
   @Override
-  public PlanNode planNode() {
+  public VectorizedPlanNode planNode() {
     return planNode;
   }
 

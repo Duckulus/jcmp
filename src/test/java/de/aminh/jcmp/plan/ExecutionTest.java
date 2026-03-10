@@ -3,8 +3,12 @@ package de.aminh.jcmp.plan;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.plan.Expression.*;
-import de.aminh.jcmp.plan.PlanNode.*;
+import de.aminh.jcmp.plan.logical.Aggregate;
+import de.aminh.jcmp.plan.logical.Expression.*;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.vectorized.expr.BinaryOperator;
+import de.aminh.jcmp.plan.logical.Expression;
+import de.aminh.jcmp.plan.logical.PlanNode.*;
 import de.aminh.jcmp.plan.TestUtils.ExecutionEngine;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,7 +33,7 @@ public class ExecutionTest {
   void integerLiteral(ExecutionEngine engine) {
     PlanNode query = new ProjectionNode(
             new SingleRowNode(),
-            new Expression[]{new LiteralInt(42), new LiteralInt(43)},
+            List.of(new LiteralInt(42), new LiteralInt(43)),
             List.of("x", "y")
     );
     assertUnorderedQueryResult(engine, createTable(), query, new int[][]{
@@ -43,9 +47,9 @@ public class ExecutionTest {
   void integerSum(ExecutionEngine engine) {
     PlanNode query = new ProjectionNode(
             new SingleRowNode(),
-            new Expression[]{new Binary(
+            List.of(new Binary(
                     BinaryOperator.PLUS, new LiteralInt(2), new LiteralInt(4)
-            )},
+            )),
             List.of("x")
     );
 
@@ -59,9 +63,9 @@ public class ExecutionTest {
   void sumThrowsTypeExceptionOnStringInput(ExecutionEngine engine) {
     PlanNode query = new ProjectionNode(
             new SingleRowNode(),
-            new Expression[]{new Binary(
+            List.of(new Binary(
                     BinaryOperator.PLUS, new LiteralInt(2), new LiteralString("hi")
-            )},
+            )),
             List.of("x")
     );
 

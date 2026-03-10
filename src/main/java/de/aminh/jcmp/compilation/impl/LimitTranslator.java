@@ -2,8 +2,8 @@ package de.aminh.jcmp.compilation.impl;
 
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.PlanNode.LimitNode;
+import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode.LimitNode;
 
 public class LimitTranslator implements NodeTranslator {
 

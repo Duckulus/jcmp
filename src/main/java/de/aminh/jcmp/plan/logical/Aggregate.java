@@ -1,8 +1,7 @@
-package de.aminh.jcmp.plan;
+package de.aminh.jcmp.plan.logical;
 
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.execution.impl.HashAggregationExecutor;
 
 public sealed interface Aggregate {
 
@@ -48,38 +47,6 @@ public sealed interface Aggregate {
       case CountStar _ -> null;
       case Sum(Expression expr) -> expr;
       case Avg(Expression expr) -> expr;
-    };
-  }
-
-  default DataType expressionType() {
-    return switch (this) {
-      case CountStar _ -> DataType.INT;
-      case Sum(Expression expr) -> expr.type();
-      case Avg(Expression expr) -> expr.type();
-    };
-  }
-
-  default Object extractValue(HashAggregationExecutor.AggregationState state, DataType type, int aggregateIndex) {
-    return switch (this) {
-      case CountStar _ -> state.counts[aggregateIndex];
-      case Sum _ -> {
-        if (type == DataType.INT) {
-          yield state.sumsInt[aggregateIndex];
-        } else if (type == DataType.DOUBLE) {
-          yield state.sumsDouble[aggregateIndex];
-        } else {
-          throw new IllegalArgumentException();
-        }
-      }
-      case Avg _ -> {
-        if (type == DataType.INT) {
-          yield (double) state.sumsInt[aggregateIndex] / state.counts[aggregateIndex];
-        } else if (type == DataType.DOUBLE) {
-          yield state.sumsDouble[aggregateIndex] / state.counts[aggregateIndex];
-        } else {
-          throw new IllegalArgumentException();
-        }
-      }
     };
   }
 

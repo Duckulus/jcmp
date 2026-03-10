@@ -4,15 +4,14 @@ import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryTranspiler;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.plan.Planner;
+import de.aminh.jcmp.execution.impl.PrintResultExecutor;
+import de.aminh.jcmp.plan.logical.PlanNode;
 
 import java.util.Set;
 
 public class Main {
 
-  public static final String INPUT_FILE = "tpch_sf5.bin";
+  public static final String INPUT_FILE = "tpch_sf1.bin";
 
   public static Set<String> COLUMN_WHITELIST = Set.of(
           "l_returnflag",
@@ -44,17 +43,15 @@ public class Main {
 //    TPCHDataLoader.writeBinaryData(table, "tpch_sf5.bin");
     TPCHTable table = TPCHDataLoader.loadBinaryData(INPUT_FILE);
 
-    PlanNode query = TPCHPlans.q5(table);
+    PlanNode query = TPCHPlans.q1(table);
 
-    VectorizedExecutor executor = Planner.plan(query);
     long currentTimeMillis = System.currentTimeMillis();
-    executor.init();
-    IO.println(executor.next());
+    PrintResultExecutor.print(query);
     IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
 
-    CompiledQuery compiled = JavaQueryTranspiler.compile(table, query);
     currentTimeMillis = System.currentTimeMillis();
-    IO.println(compiled.execute(table));
+    CompiledQuery compiledQuery = JavaQueryTranspiler.compile(table, query);
+    System.out.println(compiledQuery.execute(table));
     IO.println("Compiled: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
   }
 

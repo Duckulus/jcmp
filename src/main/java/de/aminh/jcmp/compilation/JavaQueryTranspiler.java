@@ -2,7 +2,7 @@ package de.aminh.jcmp.compilation;
 
 import de.aminh.jcmp.compilation.impl.*;
 import de.aminh.jcmp.data.Table;
-import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.logical.PlanNode;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
 
