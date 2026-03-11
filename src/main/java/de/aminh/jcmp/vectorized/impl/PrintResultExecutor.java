@@ -1,10 +1,10 @@
-package de.aminh.jcmp.execution.impl;
+package de.aminh.jcmp.vectorized.impl;
 
 import de.aminh.jcmp.data.RecordBatch;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.Planner;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
 import de.aminh.jcmp.util.TablePrinter;
 
 /**
@@ -14,7 +14,7 @@ import de.aminh.jcmp.util.TablePrinter;
 public class PrintResultExecutor implements VectorizedExecutor {
 
   public static void print(PlanNode node) {
-    PrintResultExecutor printer = new PrintResultExecutor(Planner.plan(node));
+    PrintResultExecutor printer = new PrintResultExecutor(VectorizedPlanner.plan(node));
     printer.init();
     printer.next();
   }

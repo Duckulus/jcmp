@@ -1,8 +1,7 @@
-package de.aminh.jcmp.plan.logical;
+package de.aminh.jcmp.plan;
 
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.plan.vectorized.expr.BinaryOperator;
 
 public sealed interface Expression {
 

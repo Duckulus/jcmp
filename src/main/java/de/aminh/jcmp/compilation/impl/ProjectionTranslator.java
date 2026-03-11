@@ -3,9 +3,9 @@ package de.aminh.jcmp.compilation.impl;
 import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
-import de.aminh.jcmp.plan.logical.Expression;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.logical.PlanNode.ProjectionNode;
+import de.aminh.jcmp.plan.Expression;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.PlanNode.ProjectionNode;
 
 public class ProjectionTranslator implements NodeTranslator {
 

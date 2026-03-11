@@ -1,13 +1,13 @@
-package de.aminh.jcmp.execution.impl;
+package de.aminh.jcmp.vectorized.impl;
 
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.ColumnNotFoundException;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.TableScanNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.TableScanNode;
 
 import java.util.List;
 

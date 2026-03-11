@@ -3,13 +3,13 @@ package de.aminh.jcmp.bench;
 import de.aminh.jcmp.Main;
 import de.aminh.jcmp.TPCHPlans;
 import de.aminh.jcmp.compilation.CompiledQuery;
-import de.aminh.jcmp.compilation.JavaQueryTranspiler;
+import de.aminh.jcmp.compilation.JavaQueryCompiler;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.Planner;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -41,12 +41,12 @@ public class ExecutionBenchmark {
       default -> throw new IllegalArgumentException("Unknown query: " + tpchQuery);
     };
     
-    preCompiledQuery = JavaQueryTranspiler.compile(tpcTable, node);
+    preCompiledQuery = JavaQueryCompiler.compile(tpcTable, node);
   }
 
   @Benchmark
   public void measureVectorizedExec(Blackhole bh) {
-    VectorizedExecutor executor = Planner.plan(node);
+    VectorizedExecutor executor = VectorizedPlanner.plan(node);
     executor.init();
     RecordBatch batch;
     while ((batch = executor.next()) != null) {
@@ -61,12 +61,12 @@ public class ExecutionBenchmark {
 
   @Benchmark
   public void measureCompilation(Blackhole bh) {
-    bh.consume(JavaQueryTranspiler.compile(tpcTable, node));
+    bh.consume(JavaQueryCompiler.compile(tpcTable, node));
   }
 
   @Benchmark
   public void measureCompiledEndToEnd(Blackhole bh) {
-    CompiledQuery query = JavaQueryTranspiler.compile(tpcTable, node);
+    CompiledQuery query = JavaQueryCompiler.compile(tpcTable, node);
     bh.consume(query.execute(tpcTable));
   }
 

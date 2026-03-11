@@ -2,13 +2,13 @@ package de.aminh.jcmp;
 
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.Table;
-import de.aminh.jcmp.plan.logical.Aggregate;
-import de.aminh.jcmp.plan.vectorized.expr.BinaryOperator;
-import de.aminh.jcmp.plan.logical.Expression;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.logical.PlanNode.AggregationNode;
-import de.aminh.jcmp.plan.logical.PlanNode.SelectionNode;
-import de.aminh.jcmp.plan.logical.PlanNode.TableScanNode;
+import de.aminh.jcmp.plan.Aggregate;
+import de.aminh.jcmp.plan.BinaryOperator;
+import de.aminh.jcmp.plan.Expression;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.PlanNode.AggregationNode;
+import de.aminh.jcmp.plan.PlanNode.SelectionNode;
+import de.aminh.jcmp.plan.PlanNode.TableScanNode;
 
 import java.util.List;
 

@@ -1,18 +1,17 @@
-package de.aminh.jcmp.plan;
+package de.aminh.jcmp.vectorized;
 
 import de.aminh.jcmp.data.DataType;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.execution.impl.*;
-import de.aminh.jcmp.plan.logical.Aggregate;
-import de.aminh.jcmp.plan.logical.Expression;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedAggregate;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.*;
-import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
+import de.aminh.jcmp.plan.Aggregate;
+import de.aminh.jcmp.plan.Expression;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.impl.*;
+import de.aminh.jcmp.vectorized.plan.VectorizedAggregate;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.*;
+import de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression;
 
 
-public class Planner {
+public class VectorizedPlanner {
 
 
   public static VectorizedExecutor plan(PlanNode planNode) {
@@ -27,7 +26,7 @@ public class Planner {
       case PlanNode.AggregationNode aggNode -> new AggregationNode(
               aggNode,
               translate(aggNode.child()),
-              aggNode.aggregates().stream().map(Planner::translateAggregate).toList(),
+              aggNode.aggregates().stream().map(VectorizedPlanner::translateAggregate).toList(),
               aggNode.aggregateColumnAliases(),
               aggNode.keys()
       );
@@ -36,8 +35,8 @@ public class Planner {
               joinNode,
               translate(joinNode.leftChild()),
               translate(joinNode.rightChild()),
-              joinNode.leftExprs().stream().map(Planner::translateExp).toList(),
-              joinNode.rightExprs().stream().map(Planner::translateExp).toList(),
+              joinNode.leftExprs().stream().map(VectorizedPlanner::translateExp).toList(),
+              joinNode.rightExprs().stream().map(VectorizedPlanner::translateExp).toList(),
               translateExp(joinNode.residualFilter())
       );
 
@@ -50,7 +49,7 @@ public class Planner {
       case PlanNode.ProjectionNode projNode -> new ProjectionNode(
               projNode,
               translate(projNode.child()),
-              projNode.expressions().stream().map(Planner::translateExp).toList(),
+              projNode.expressions().stream().map(VectorizedPlanner::translateExp).toList(),
               projNode.columnAliases()
       );
 

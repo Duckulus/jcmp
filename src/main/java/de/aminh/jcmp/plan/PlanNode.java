@@ -1,4 +1,4 @@
-package de.aminh.jcmp.plan.logical;
+package de.aminh.jcmp.plan;
 
 import com.google.common.collect.Streams;
 import de.aminh.jcmp.Configuration;

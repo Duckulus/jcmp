@@ -1,4 +1,4 @@
-package de.aminh.jcmp.plan.vectorized.expr;
+package de.aminh.jcmp.plan;
 
 public enum BinaryOperator {
   PLUS, MINUS, TIMES, DIVIDE,

@@ -1,4 +1,4 @@
-package de.aminh.jcmp.plan.vectorized.expr;
+package de.aminh.jcmp.vectorized.plan.expr;
 
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Column.DoubleColumn;
@@ -8,8 +8,9 @@ import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.exceptions.ColumnNotFoundException;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.plan.Planner;
-import de.aminh.jcmp.plan.logical.Expression;
+import de.aminh.jcmp.plan.BinaryOperator;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
+import de.aminh.jcmp.plan.Expression;
 import de.aminh.jcmp.util.ArrayUtil;
 
 import java.util.Arrays;
@@ -90,8 +91,8 @@ public interface VectorizedExpression {
   }
 
   static VectorizedExpression translateBinary(Expression.Binary binary) {
-    VectorizedExpression left = Planner.translateExp(binary.left());
-    VectorizedExpression right = Planner.translateExp(binary.right());
+    VectorizedExpression left = VectorizedPlanner.translateExp(binary.left());
+    VectorizedExpression right = VectorizedPlanner.translateExp(binary.right());
     DataType leftType = left.type();
     DataType rightType = right.type();
 

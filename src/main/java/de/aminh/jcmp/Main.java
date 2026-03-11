@@ -1,11 +1,11 @@
 package de.aminh.jcmp;
 
 import de.aminh.jcmp.compilation.CompiledQuery;
-import de.aminh.jcmp.compilation.JavaQueryTranspiler;
+import de.aminh.jcmp.compilation.JavaQueryCompiler;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
-import de.aminh.jcmp.execution.impl.PrintResultExecutor;
-import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.vectorized.impl.PrintResultExecutor;
+import de.aminh.jcmp.plan.PlanNode;
 
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public class Main {
     IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
 
     currentTimeMillis = System.currentTimeMillis();
-    CompiledQuery compiledQuery = JavaQueryTranspiler.compile(table, query);
+    CompiledQuery compiledQuery = JavaQueryCompiler.compile(table, query);
     System.out.println(compiledQuery.execute(table));
     IO.println("Compiled: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
   }

@@ -1,9 +1,9 @@
-package de.aminh.jcmp.plan.vectorized;
+package de.aminh.jcmp.vectorized.plan;
 
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.exceptions.TypeException;
-import de.aminh.jcmp.execution.impl.HashAggregationExecutor;
-import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
+import de.aminh.jcmp.vectorized.impl.HashAggregationExecutor;
+import de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression;
 
 public sealed interface VectorizedAggregate {
 
@@ -11,7 +11,7 @@ public sealed interface VectorizedAggregate {
 
   }
 
-  record Sum(de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression expression) implements VectorizedAggregate {
+  record Sum(de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression expression) implements VectorizedAggregate {
 
   }
 

@@ -1,4 +1,4 @@
-package de.aminh.jcmp.plan.vectorized.expr;
+package de.aminh.jcmp.vectorized.plan.expr;
 
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.DataType;

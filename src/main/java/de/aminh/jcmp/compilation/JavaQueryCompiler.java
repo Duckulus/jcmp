@@ -2,7 +2,7 @@ package de.aminh.jcmp.compilation;
 
 import de.aminh.jcmp.compilation.impl.*;
 import de.aminh.jcmp.data.Table;
-import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.plan.PlanNode;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
 
@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaQueryTranspiler {
+public class JavaQueryCompiler {
 
   private static final boolean DEBUG_CODEGEN = Boolean.getBoolean("jcmp.debug.codegen");
 

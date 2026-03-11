@@ -1,11 +1,11 @@
-package de.aminh.jcmp.execution.impl;
+package de.aminh.jcmp.vectorized.impl;
 
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.ProjectionNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.ProjectionNode;
 
 import java.util.List;
 

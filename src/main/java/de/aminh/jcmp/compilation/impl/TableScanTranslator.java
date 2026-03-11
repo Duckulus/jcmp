@@ -4,8 +4,8 @@ import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
 import de.aminh.jcmp.data.Attribute;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.logical.PlanNode.TableScanNode;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.PlanNode.TableScanNode;
 
 import java.util.ArrayList;
 import java.util.List;

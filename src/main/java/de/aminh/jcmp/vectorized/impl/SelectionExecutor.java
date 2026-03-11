@@ -1,11 +1,11 @@
-package de.aminh.jcmp.execution.impl;
+package de.aminh.jcmp.vectorized.impl;
 
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Column.IntColumn;
 import de.aminh.jcmp.data.RecordBatch;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode;
-import de.aminh.jcmp.plan.vectorized.VectorizedPlanNode.SelectionNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
+import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.SelectionNode;
 
 /**
  * This executor performs selection (The WHERE clause of an SQL statement)

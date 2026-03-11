@@ -3,8 +3,8 @@ package de.aminh.jcmp.compilation.impl;
 import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.logical.PlanNode.SelectionNode;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.plan.PlanNode.SelectionNode;
 
 public class SelectionTranslator implements NodeTranslator {
 

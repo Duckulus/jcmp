@@ -1,9 +1,9 @@
-package de.aminh.jcmp.plan.vectorized;
+package de.aminh.jcmp.vectorized.plan;
 
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Table;
-import de.aminh.jcmp.plan.logical.PlanNode;
-import de.aminh.jcmp.plan.vectorized.expr.VectorizedExpression;
+import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression;
 
 import java.util.List;
 

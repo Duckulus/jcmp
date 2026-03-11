@@ -1,10 +1,10 @@
 package de.aminh.jcmp.plan;
 
 import de.aminh.jcmp.compilation.CompiledQuery;
-import de.aminh.jcmp.compilation.JavaQueryTranspiler;
+import de.aminh.jcmp.compilation.JavaQueryCompiler;
 import de.aminh.jcmp.data.*;
-import de.aminh.jcmp.execution.VectorizedExecutor;
-import de.aminh.jcmp.plan.logical.PlanNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -17,7 +17,7 @@ public class TestUtils {
     VECTORIZED {
       @Override
       public RecordBatch execute(Table table, PlanNode plan) {
-        VectorizedExecutor executor = Planner.plan(plan);
+        VectorizedExecutor executor = VectorizedPlanner.plan(plan);
         executor.init();
         RecordBatch merged = null;
         RecordBatch batch;
@@ -33,7 +33,7 @@ public class TestUtils {
     }, COMPILED {
       @Override
       public RecordBatch execute(Table table, PlanNode plan) {
-        CompiledQuery compiledQuery = JavaQueryTranspiler.compile(table, plan);
+        CompiledQuery compiledQuery = JavaQueryCompiler.compile(table, plan);
         return compiledQuery.execute(table);
       }
     };
