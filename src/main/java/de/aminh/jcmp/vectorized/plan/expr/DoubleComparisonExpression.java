@@ -16,11 +16,10 @@ abstract class DoubleComparisonExpression implements VectorizedExpression {
   abstract void compute(double[] l, double[] r, int[] out);
 
   @Override
-  public Column evalSlice(RecordBatch input, int start, int end) {
-    int sliceLength = end - start;
-    double[] l = ((Column.DoubleColumn) left.evalSlice(input, start, end)).values();
-    double[] r = ((Column.DoubleColumn) right.evalSlice(input, start, end)).values();
-    int[] out = new int[sliceLength];
+  public Column eval(RecordBatch input) {
+    double[] l = ((Column.DoubleColumn) left.eval(input)).values();
+    double[] r = ((Column.DoubleColumn) right.eval(input)).values();
+    int[] out = new int[input.size()];
 
     compute(l, r, out);
 

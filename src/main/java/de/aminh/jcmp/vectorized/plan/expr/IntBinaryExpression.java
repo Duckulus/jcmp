@@ -18,11 +18,10 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
 
 
   @Override
-  public Column evalSlice(RecordBatch input, int start, int end) {
-    int sliceLength = end - start;
-    int[] l = ((Column.IntColumn) left.evalSlice(input, start, end)).values();
-    int[] r = ((Column.IntColumn) right.evalSlice(input, start, end)).values();
-    int[] out = new int[sliceLength];
+  public Column eval(RecordBatch input) {
+    int[] l = ((Column.IntColumn) left.eval(input)).values();
+    int[] r = ((Column.IntColumn) right.eval(input)).values();
+    int[] out = new int[input.size()];
 
     compute(l, r, out);
 

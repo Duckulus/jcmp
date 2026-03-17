@@ -16,11 +16,10 @@ public abstract class DoubleArithmeticExpression implements VectorizedExpression
   abstract void compute(double[] l, double[] r, double[] out);
 
   @Override
-  public Column evalSlice(RecordBatch input, int start, int end) {
-    int sliceLength = end - start;
-    double[] l = ((Column.DoubleColumn) left.evalSlice(input, start, end)).values();
-    double[] r = ((Column.DoubleColumn) right.evalSlice(input, start, end)).values();
-    double[] out = new double[sliceLength];
+  public Column eval(RecordBatch input) {
+    double[] l = ((Column.DoubleColumn) left.eval(input)).values();
+    double[] r = ((Column.DoubleColumn) right.eval(input)).values();
+    double[] out = new double[input.size()];
 
     compute(l, r, out);
 

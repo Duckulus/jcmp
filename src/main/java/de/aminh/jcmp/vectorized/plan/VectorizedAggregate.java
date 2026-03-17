@@ -11,7 +11,7 @@ public sealed interface VectorizedAggregate {
 
   }
 
-  record Sum(de.aminh.jcmp.vectorized.plan.expr.VectorizedExpression expression) implements VectorizedAggregate {
+  record Sum(VectorizedExpression expression) implements VectorizedAggregate {
 
   }
 

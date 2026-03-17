@@ -1,11 +1,11 @@
 package de.aminh.jcmp;
 
-import de.aminh.jcmp.compilation.CompiledQuery;
-import de.aminh.jcmp.compilation.JavaQueryCompiler;
+import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
-import de.aminh.jcmp.vectorized.executors.PrintResultExecutor;
 import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
 
 import java.util.Set;
 
@@ -45,14 +45,11 @@ public class Main {
 
     PlanNode query = TPCHPlans.q1(table);
 
-    long currentTimeMillis = System.currentTimeMillis();
-    PrintResultExecutor.print(query);
-    IO.println("Vectorized: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
-
-    currentTimeMillis = System.currentTimeMillis();
-    CompiledQuery compiledQuery = JavaQueryCompiler.compile(table, query);
-    System.out.println(compiledQuery.execute(table));
-    IO.println("Compiled: %dms".formatted(System.currentTimeMillis() - currentTimeMillis));
+    VectorizedExecutor exec = VectorizedPlanner.plan(query);
+    exec.init();
+    RecordBatch batch;
+    while ((batch = exec.next()) != null) {
+    }
   }
 
 }

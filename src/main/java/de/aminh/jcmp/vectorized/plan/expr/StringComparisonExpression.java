@@ -16,11 +16,10 @@ public abstract class StringComparisonExpression implements VectorizedExpression
   abstract void compute(String[] l, String[] r, int[] out);
 
   @Override
-  public Column evalSlice(RecordBatch input, int start, int end) {
-    int sliceLength = end - start;
-    String[] l = ((Column.StringColumn) left.evalSlice(input, start, end)).values();
-    String[] r = ((Column.StringColumn) right.evalSlice(input, start, end)).values();
-    int[] out = new int[sliceLength];
+  public Column eval(RecordBatch input) {
+    String[] l = ((Column.StringColumn) left.eval(input)).values();
+    String[] r = ((Column.StringColumn) right.eval(input)).values();
+    int[] out = new int[input.size()];
 
     compute(l, r, out);
 

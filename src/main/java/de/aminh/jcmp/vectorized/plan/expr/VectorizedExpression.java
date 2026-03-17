@@ -18,19 +18,14 @@ import java.util.OptionalInt;
 
 public interface VectorizedExpression {
 
-  default Column eval(RecordBatch input) {
-    return evalSlice(input, 0, input.size());
-  }
-
-  Column evalSlice(RecordBatch input, int start, int end);
+  Column eval(RecordBatch input);
 
   DataType type();
 
   record LiteralInt(int value) implements VectorizedExpression {
     @Override
-    public Column evalSlice(RecordBatch input, int start, int end) {
-      int sliceLength = end - start;
-      int[] output = new int[sliceLength];
+    public Column eval(RecordBatch input) {
+      int[] output = new int[input.size()];
       Arrays.fill(output, value);
       return new IntColumn(output);
     }
@@ -43,9 +38,8 @@ public interface VectorizedExpression {
 
   record LiteralDouble(double value) implements VectorizedExpression {
     @Override
-    public Column evalSlice(RecordBatch input, int start, int end) {
-      int sliceLength = end - start;
-      double[] output = new double[sliceLength];
+    public Column eval(RecordBatch input) {
+      double[] output = new double[input.size()];
       Arrays.fill(output, value);
       return new DoubleColumn(output);
     }
@@ -58,9 +52,8 @@ public interface VectorizedExpression {
 
   record LiteralString(String value) implements VectorizedExpression {
     @Override
-    public Column evalSlice(RecordBatch input, int start, int end) {
-      int sliceLength = end - start;
-      String[] output = new String[sliceLength];
+    public Column eval(RecordBatch input) {
+      String[] output = new String[input.size()];
       Arrays.fill(output, value);
       return new StringColumn(output);
     }
@@ -73,15 +66,14 @@ public interface VectorizedExpression {
 
   record ColumnValue(String name, DataType type) implements VectorizedExpression {
     @Override
-    public Column evalSlice(RecordBatch input, int start, int end) {
-      int sliceLength = end - start;
+    public Column eval(RecordBatch input) {
       OptionalInt columnIndex = ArrayUtil.indexOf(input.attributes(),
               attr -> attr.name().equals(name)
       );
       if (columnIndex.isEmpty()) {
         throw new ColumnNotFoundException(name);
       }
-      return input.columns()[columnIndex.getAsInt()].copySlice(start, sliceLength);
+      return input.columns()[columnIndex.getAsInt()];
     }
 
     @Override
