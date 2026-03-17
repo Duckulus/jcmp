@@ -1,7 +1,6 @@
 package de.aminh.jcmp.plan;
 
 import com.google.common.collect.Streams;
-import de.aminh.jcmp.Configuration;
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.exceptions.TypeException;
@@ -28,10 +27,8 @@ public sealed interface PlanNode {
 
   }
 
-  record TableScanNode(Table table, List<String> columnNames, int batchSize) implements PlanNode {
-    public TableScanNode(Table table, List<String> columnNames) {
-      this(table, columnNames, Configuration.BATCH_SIZE);
-    }
+  record TableScanNode(Table table, List<String> columnNames) implements PlanNode {
+
   }
 
   record SelectionNode(PlanNode child, Expression predicate) implements PlanNode {

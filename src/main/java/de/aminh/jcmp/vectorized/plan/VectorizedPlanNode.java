@@ -1,5 +1,6 @@
 package de.aminh.jcmp.vectorized.plan;
 
+import de.aminh.jcmp.Configuration;
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.plan.PlanNode;
@@ -28,7 +29,9 @@ public sealed interface VectorizedPlanNode {
 
   record TableScanNode(PlanNode.TableScanNode logical, Table table, List<String> columnNames,
                        int batchSize) implements VectorizedPlanNode {
-
+    public TableScanNode(PlanNode.TableScanNode logical, Table table, List<String> columnNames) {
+      this(logical, table, columnNames, Configuration.BATCH_SIZE);
+    }
   }
 
   record SelectionNode(PlanNode.SelectionNode logical, VectorizedPlanNode child,

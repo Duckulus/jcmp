@@ -73,13 +73,13 @@ public class ExecutionTest {
   @EnumSource(ExecutionEngine.class)
   void tableScan(ExecutionEngine engine) {
     Table testTable = createTable((Object) new int[]{1, 2, 3, 4, 5});
-    PlanNode query1 = new TableScanNode(testTable, List.of("a"), 5);
+    PlanNode query1 = new TableScanNode(testTable, List.of("a"));
     assertUnorderedQueryResult(engine, testTable, query1,
             new int[][]{
                     {1, 2, 3, 4, 5},
             });
 
-    PlanNode query2 = new TableScanNode(testTable, List.of("a"), 3);
+    PlanNode query2 = new TableScanNode(testTable, List.of("a"));
     assertUnorderedQueryResult(engine, testTable, query2,
             new int[][]{
                     {1, 2, 3, 4, 5},

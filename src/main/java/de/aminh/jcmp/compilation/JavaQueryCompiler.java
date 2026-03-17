@@ -1,6 +1,6 @@
 package de.aminh.jcmp.compilation;
 
-import de.aminh.jcmp.compilation.impl.*;
+import de.aminh.jcmp.compilation.translators.*;
 import de.aminh.jcmp.data.Table;
 import de.aminh.jcmp.plan.PlanNode;
 import org.codehaus.commons.compiler.CompileException;

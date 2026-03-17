@@ -1,4 +1,4 @@
-package de.aminh.jcmp.compilation.impl;
+package de.aminh.jcmp.compilation.translators;
 
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;

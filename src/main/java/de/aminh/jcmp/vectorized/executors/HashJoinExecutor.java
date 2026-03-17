@@ -1,4 +1,4 @@
-package de.aminh.jcmp.vectorized.impl;
+package de.aminh.jcmp.vectorized.executors;
 
 import de.aminh.jcmp.data.Attribute;
 import de.aminh.jcmp.data.Column;

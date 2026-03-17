@@ -18,7 +18,6 @@ public sealed interface Column {
     public static DoubleColumn create(int size) {
       return new DoubleColumn(new double[size]);
     }
-
   }
 
   record StringColumn(String[] values) implements Column {

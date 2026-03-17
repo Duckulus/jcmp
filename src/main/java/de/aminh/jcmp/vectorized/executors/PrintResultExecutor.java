@@ -1,4 +1,4 @@
-package de.aminh.jcmp.vectorized.impl;
+package de.aminh.jcmp.vectorized.executors;
 
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.vectorized.VectorizedExecutor;

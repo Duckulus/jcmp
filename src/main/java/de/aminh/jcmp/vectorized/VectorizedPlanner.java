@@ -4,7 +4,7 @@ import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.plan.Aggregate;
 import de.aminh.jcmp.plan.Expression;
 import de.aminh.jcmp.plan.PlanNode;
-import de.aminh.jcmp.vectorized.impl.*;
+import de.aminh.jcmp.vectorized.executors.*;
 import de.aminh.jcmp.vectorized.plan.VectorizedAggregate;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.*;
@@ -64,8 +64,7 @@ public class VectorizedPlanner {
       case PlanNode.TableScanNode scanNode -> new TableScanNode(
               scanNode,
               scanNode.table(),
-              scanNode.columnNames(),
-              scanNode.batchSize()
+              scanNode.columnNames()
       );
     };
   }

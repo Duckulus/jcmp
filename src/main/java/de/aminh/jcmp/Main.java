@@ -4,7 +4,7 @@ import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryCompiler;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
-import de.aminh.jcmp.vectorized.impl.PrintResultExecutor;
+import de.aminh.jcmp.vectorized.executors.PrintResultExecutor;
 import de.aminh.jcmp.plan.PlanNode;
 
 import java.util.Set;

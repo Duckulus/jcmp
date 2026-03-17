@@ -1,4 +1,4 @@
-package de.aminh.jcmp.compilation.impl;
+package de.aminh.jcmp.compilation.translators;
 
 import com.google.common.collect.Streams;
 import de.aminh.jcmp.compilation.JavaCodeGen;
