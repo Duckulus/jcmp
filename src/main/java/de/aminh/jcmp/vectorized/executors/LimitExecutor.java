@@ -2,11 +2,14 @@ package de.aminh.jcmp.vectorized.executors;
 
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.RecordBatch;
+import de.aminh.jcmp.vectorized.ExecutionContext;
 import de.aminh.jcmp.vectorized.VectorizedExecutor;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.LimitNode;
 
 public class LimitExecutor implements VectorizedExecutor {
+
+  private final ExecutionContext ctx;
 
   private final LimitNode planNode;
   private final VectorizedExecutor child;
@@ -14,7 +17,8 @@ public class LimitExecutor implements VectorizedExecutor {
   private int emitted = 0;
   private boolean done = false;
 
-  public LimitExecutor(LimitNode planNode, VectorizedExecutor child) {
+  public LimitExecutor(ExecutionContext ctx, LimitNode planNode, VectorizedExecutor child) {
+    this.ctx = ctx;
     this.planNode = planNode;
     this.child = child;
   }
@@ -29,23 +33,24 @@ public class LimitExecutor implements VectorizedExecutor {
     if (done || emitted >= planNode.limit()) {
       return null;
     }
-    RecordBatch batch = child.next();
-    if (batch == null) {
+    RecordBatch inputBatch = child.next();
+    if (inputBatch == null) {
       done = true;
       return null;
     }
 
     int rowsLeft = planNode.limit() - emitted;
-    if (rowsLeft < batch.size()) {
-      Column[] outputColumns = new Column[batch.columns().length];
-      for (int i = 0; i < batch.columns().length; i++) {
-       outputColumns[i] = batch.columns()[i].copySlice(0, rowsLeft);
+    if (rowsLeft < inputBatch.size()) {
+      Column[] outputColumns = new Column[inputBatch.columns().length];
+      for (int i = 0; i < inputBatch.columns().length; i++) {
+       outputColumns[i] = inputBatch.columns()[i].copySlice(0, rowsLeft, ctx.pool());
       }
       emitted += rowsLeft;
-      return new RecordBatch(rowsLeft, batch.attributes(), outputColumns);
+      inputBatch.release(ctx.pool());
+      return new RecordBatch(rowsLeft, inputBatch.attributes(), outputColumns);
     } else {
-      emitted += batch.size();
-      return new RecordBatch(batch.size(), batch.attributes(), batch.columns());
+      emitted += inputBatch.size();
+      return new RecordBatch(inputBatch.size(), inputBatch.attributes(), inputBatch.columns());
     }
   }
 

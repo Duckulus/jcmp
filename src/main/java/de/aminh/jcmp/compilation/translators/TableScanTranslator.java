@@ -27,7 +27,7 @@ public class TableScanTranslator implements NodeTranslator {
   public void produce(TranslationContext ctx) {
     inputRowCountId = ctx.nextId();
     ctx.prelude().append(
-            "int inputRowCount_%d = table.getColumn(\"%s\").length();\n".formatted(
+            "int inputRowCount_%d = table.getColumn(\"%s\").size();\n".formatted(
                     inputRowCountId, planNode.columnNames().getFirst()
             )
     );

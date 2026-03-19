@@ -3,6 +3,7 @@ package de.aminh.jcmp.vectorized.plan.expr;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.DataType;
 import de.aminh.jcmp.data.RecordBatch;
+import de.aminh.jcmp.vectorized.VectorPool;
 
 public abstract class IntBinaryExpression implements VectorizedExpression {
 
@@ -14,18 +15,25 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     this.right = right;
   }
 
-  abstract void compute(int[] l, int[] r, int[] out);
-
+  abstract void compute(int[] l, int[] r, int[] out, int size);
 
   @Override
-  public Column eval(RecordBatch input) {
-    int[] l = ((Column.IntColumn) left.eval(input)).values();
-    int[] r = ((Column.IntColumn) right.eval(input)).values();
-    int[] out = new int[input.size()];
+  public Column eval(RecordBatch input, VectorPool pool) {
+    Column.IntColumn leftCol = (Column.IntColumn) left.eval(input, pool);
+    Column.IntColumn rightCol = (Column.IntColumn) right.eval(input, pool);
 
-    compute(l, r, out);
+    int[] l = leftCol.values();
+    int[] r = rightCol.values();
+    int[] out = pool.getIntVector();
 
-    return new Column.IntColumn(out);
+    int size = input.size();
+
+    compute(l, r, out, size);
+
+    leftCol.release(pool);
+    rightCol.release(pool);
+
+    return new Column.IntColumn(size, out);
   }
 
   @Override
@@ -39,8 +47,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] + r[i];
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] + r[i];
     }
   }
 
@@ -50,8 +58,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] - r[i];
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] - r[i];
     }
   }
 
@@ -61,8 +69,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] * r[i];
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] * r[i];
     }
   }
 
@@ -72,8 +80,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] / r[i]; // <-- Hier war vorher ein *
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] / r[i];
     }
   }
 
@@ -83,8 +91,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] == r[i] ? 1 : 0;
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] == r[i] ? 1 : 0;
     }
   }
 
@@ -94,8 +102,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] < r[i] ? 1 : 0;
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] < r[i] ? 1 : 0;
     }
   }
 
@@ -105,8 +113,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] > r[i] ? 1 : 0;
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] > r[i] ? 1 : 0;
     }
   }
 
@@ -116,8 +124,8 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] <= r[i] ? 1 : 0;
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] <= r[i] ? 1 : 0;
     }
   }
 
@@ -127,22 +135,22 @@ public abstract class IntBinaryExpression implements VectorizedExpression {
     }
 
     @Override
-    void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = l[i] >= r[i] ? 1 : 0;
+    void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = l[i] >= r[i] ? 1 : 0;
     }
   }
 
   static final class IntAndExpression extends IntBinaryExpression {
     IntAndExpression(VectorizedExpression left, VectorizedExpression right) { super(left, right); }
-    @Override void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = (l[i] == 1 && r[i] == 1) ? 1 : 0;
+    @Override void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = (l[i] == 1 && r[i] == 1) ? 1 : 0;
     }
   }
 
   static final class IntOrExpression extends IntBinaryExpression {
     IntOrExpression(VectorizedExpression left, VectorizedExpression right) { super(left, right); }
-    @Override void compute(int[] l, int[] r, int[] out) {
-      for (int i = 0; i < out.length; i++) out[i] = (l[i] == 1 || r[i] == 1) ? 1 : 0;
+    @Override void compute(int[] l, int[] r, int[] out, int size) {
+      for (int i = 0; i < size; i++) out[i] = (l[i] == 1 || r[i] == 1) ? 1 : 0;
     }
   }
 }

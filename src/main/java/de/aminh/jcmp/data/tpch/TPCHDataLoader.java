@@ -21,19 +21,19 @@ public class TPCHDataLoader {
       for(TPCHSchema schema : TPCHSchema.values()) {
         for(Attribute attribute : schema.getAttributes()) {
           Column column = table.getColumn(attribute.name());
-          out.writeInt(column.length());
+          out.writeInt(column.size());
           switch (column) {
-            case Column.IntColumn(int[] values) -> {
+            case Column.IntColumn(_, int[] values) -> {
               for (int value : values) {
                 out.writeInt(value);
               }
             }
-            case Column.DoubleColumn(double[] values) -> {
+            case Column.DoubleColumn(_, double[] values) -> {
               for (double value : values) {
                 out.writeDouble(value);
               }
             }
-            case Column.StringColumn(String[] values) -> {
+            case Column.StringColumn(_, String[] values) -> {
               for (String value : values) {
                 out.writeUTF(value);
               }
@@ -67,20 +67,20 @@ public class TPCHDataLoader {
             }
             continue;
           }
-          Column column = attribute.type().createColumn(columnLength);
+          Column column = attribute.type().createUnmanagedColumn(columnLength);
           allColumns.put(attribute.name(), column);
           switch (column) {
-            case Column.IntColumn(int[] values) -> {
+            case Column.IntColumn(_, int[] values) -> {
               for(int i = 0; i < values.length; i++) {
                 values[i] = in.readInt();
               }
             }
-            case Column.DoubleColumn(double[] values) -> {
+            case Column.DoubleColumn(_, double[] values) -> {
               for(int i = 0; i < values.length; i++) {
                 values[i] = in.readDouble();
               }
             }
-            case Column.StringColumn(String[] values) -> {
+            case Column.StringColumn(_, String[] values) -> {
               for(int i = 0; i < values.length; i++) {
                 values[i] = in.readUTF();
               }
@@ -115,7 +115,7 @@ public class TPCHDataLoader {
     Column[] columns = new Column[schema.getAttributes().size()];
     for (int i = 0; i < schema.getAttributes().size(); i++) {
       Attribute attribute = schema.getAttributes().get(i);
-      Column col = attribute.type().createColumn(nLines);
+      Column col = attribute.type().createUnmanagedColumn(nLines);
       columns[i] = col;
       allColumns.put(attribute.name(), col);
     }

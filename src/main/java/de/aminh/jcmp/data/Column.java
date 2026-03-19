@@ -1,5 +1,6 @@
 package de.aminh.jcmp.data;
 
+import de.aminh.jcmp.vectorized.VectorPool;
 import org.apache.commons.lang3.ArrayUtils;
 
 
@@ -8,38 +9,39 @@ import org.apache.commons.lang3.ArrayUtils;
  */
 public sealed interface Column {
 
-  record IntColumn(int[] values) implements Column {
-    public static IntColumn create(int size) {
-      return new IntColumn(new int[size]);
+  int size();
+
+  record IntColumn(int size, int[] values) implements Column {
+    public static IntColumn create(int size, int[] values) {
+      return new IntColumn(size, values);
     }
   }
 
-  record DoubleColumn(double[] values) implements Column {
-    public static DoubleColumn create(int size) {
-      return new DoubleColumn(new double[size]);
+  record DoubleColumn(int size, double[] values) implements Column {
+    public static DoubleColumn create(int size, double[] values) {
+      return new DoubleColumn(size, values);
     }
   }
 
-  record StringColumn(String[] values) implements Column {
-    public static StringColumn create(int size) {
-      return new StringColumn(new String[size]);
+  record StringColumn(int size, String[] values) implements Column {
+    public static StringColumn create(int size, String[] values) {
+      return new StringColumn(size, values);
     }
-
   }
 
   default void parseAndSetValue(int index, String value) {
     switch (this) {
-      case IntColumn(int[] values) -> values[index] = Integer.parseInt(value);
-      case DoubleColumn(double[] values) -> values[index] = Double.parseDouble(value);
-      case StringColumn(String[] values) -> values[index] = value;
+      case IntColumn(_, int[] values) -> values[index] = Integer.parseInt(value);
+      case DoubleColumn(_, double[] values) -> values[index] = Double.parseDouble(value);
+      case StringColumn(_, String[] values) -> values[index] = value;
     }
   }
 
   default Object getValue(int index) {
     return switch (this) {
-      case DoubleColumn(double[] values) -> values[index];
-      case IntColumn(int[] values) -> values[index];
-      case StringColumn(String[] values) -> values[index];
+      case DoubleColumn(_, double[] values) -> values[index];
+      case IntColumn(_, int[] values) -> values[index];
+      case StringColumn(_, String[] values) -> values[index];
     };
   }
 
@@ -48,25 +50,22 @@ public sealed interface Column {
    * @param cursor The position to start reading from
    * @param n The number of values to read. cursor + n MUST be <= the size of this column.
    */
-  default Column copySlice(int cursor, int n) {
-    if (cursor == 0 && n == this.length()) {
-      return this;
-    }
+  default Column copySlice(int cursor, int n, VectorPool pool) {
     return switch (this) {
-      case IntColumn(int[] values) -> {
-        int[] outputValues = new int[n];
+      case IntColumn(_, int[] values) -> {
+        int[] outputValues = pool.getIntVector();
         System.arraycopy(values, cursor, outputValues, 0, n);
-        yield new IntColumn(outputValues);
+        yield new IntColumn(n, outputValues);
       }
-      case DoubleColumn(double[] values) -> {
-        double[] outputValues = new double[n];
+      case DoubleColumn(_, double[] values) -> {
+        double[] outputValues = pool.getDoubleVector();
         System.arraycopy(values, cursor, outputValues, 0, n);
-        yield new DoubleColumn(outputValues);
+        yield new DoubleColumn(n, outputValues);
       }
-      case StringColumn(String[] values) -> {
-        String[] outputValues = new String[n];
+      case StringColumn(_, String[] values) -> {
+        String[] outputValues = pool.getStringVector();
         System.arraycopy(values, cursor, outputValues, 0, n);
-        yield new StringColumn(outputValues);
+        yield new StringColumn(n, outputValues);
       }
     };
   }
@@ -76,54 +75,54 @@ public sealed interface Column {
    * @param mask An int array of 0s and 1s that MUST be the same length as this column
    * @param n MUST match the number of 1s in the mask
    */
-  default Column copyMask(int[] mask, int n) {
+  default Column copyMask(int[] mask, int n, VectorPool pool) {
     return switch (this) {
-      case IntColumn(int[] values) -> {
-        int[] outputValues = new int[n];
+      case IntColumn(_, int[] values) -> {
+        int[] outputValues = pool.getIntVector();
         for(int i = 0, j = 0; i < mask.length; i++) {
           if (mask[i] == 1) {
             outputValues[j++] = values[i];
           }
         }
-        yield new IntColumn(outputValues);
+        yield new IntColumn(n, outputValues);
       }
-      case DoubleColumn(double[] values) -> {
-        double[] outputValues = new double[n];
+      case DoubleColumn(_, double[] values) -> {
+        double[] outputValues = pool.getDoubleVector();
         for(int i = 0, j = 0; i < mask.length; i++) {
           if (mask[i] == 1) {
             outputValues[j++] = values[i];
           }
         }
-        yield new DoubleColumn(outputValues);
+        yield new DoubleColumn(n, outputValues);
       }
-      case StringColumn(String[] values) -> {
-        String[] outputValues = new String[n];
+      case StringColumn(_, String[] values) -> {
+        String[] outputValues = pool.getStringVector();
         for(int i = 0, j = 0; i < mask.length; i++) {
           if (mask[i] == 1) {
             outputValues[j++] = values[i];
           }
         }
-        yield new StringColumn(outputValues);
+        yield new StringColumn(n, outputValues);
       }
     };
   }
 
-  default int length() {
-    return switch (this) {
-      case IntColumn(int[] values) -> values.length;
-      case DoubleColumn(double[] values) -> values.length;
-      case StringColumn(String[] values) -> values.length;
-    };
+  default void release(VectorPool pool) {
+   switch (this) {
+     case IntColumn(_, int[] values) -> pool.release(values);
+     case DoubleColumn(_, double[] values) -> pool.release(values);
+     case StringColumn(_, String[] values) -> pool.release(values);
+   }
   }
 
   default Column merge(Column other) {
     return switch (this) {
-      case IntColumn(int[] values) when other instanceof IntColumn(int[] otherValues) ->
-              new IntColumn(ArrayUtils.addAll(values, otherValues));
-      case DoubleColumn(double[] values) when other instanceof DoubleColumn(double[] otherValues) ->
-              new DoubleColumn(ArrayUtils.addAll(values, otherValues));
-      case StringColumn(String[] values) when other instanceof StringColumn(String[] otherValues) ->
-              new StringColumn(ArrayUtils.addAll(values, otherValues));
+      case IntColumn(int size, int[] values) when other instanceof IntColumn(int otherSize, int[] otherValues) ->
+              new IntColumn(size + otherSize, ArrayUtils.addAll(values, otherValues));
+      case DoubleColumn(int size, double[] values) when other instanceof DoubleColumn(int otherSize, double[] otherValues) ->
+              new DoubleColumn(size + otherSize, ArrayUtils.addAll(values, otherValues));
+      case StringColumn(int size, String[] values) when other instanceof StringColumn(int otherSize, String[] otherValues) ->
+              new StringColumn(size + otherSize, ArrayUtils.addAll(values, otherValues));
       default -> throw new IllegalArgumentException("Column types didn't match");
     };
   }

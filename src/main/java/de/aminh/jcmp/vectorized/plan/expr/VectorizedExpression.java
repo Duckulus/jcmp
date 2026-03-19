@@ -9,6 +9,7 @@ import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.exceptions.ColumnNotFoundException;
 import de.aminh.jcmp.exceptions.TypeException;
 import de.aminh.jcmp.plan.BinaryOperator;
+import de.aminh.jcmp.vectorized.VectorPool;
 import de.aminh.jcmp.vectorized.VectorizedPlanner;
 import de.aminh.jcmp.plan.Expression;
 import de.aminh.jcmp.util.ArrayUtil;
@@ -18,16 +19,16 @@ import java.util.OptionalInt;
 
 public interface VectorizedExpression {
 
-  Column eval(RecordBatch input);
+  Column eval(RecordBatch input, VectorPool pool);
 
   DataType type();
 
   record LiteralInt(int value) implements VectorizedExpression {
     @Override
-    public Column eval(RecordBatch input) {
-      int[] output = new int[input.size()];
-      Arrays.fill(output, value);
-      return new IntColumn(output);
+    public Column eval(RecordBatch input, VectorPool pool) {
+      int[] output = pool.getIntVector();
+      Arrays.fill(output, 0, input.size(), value);
+      return new IntColumn(input.size(), output);
     }
 
     @Override
@@ -38,10 +39,10 @@ public interface VectorizedExpression {
 
   record LiteralDouble(double value) implements VectorizedExpression {
     @Override
-    public Column eval(RecordBatch input) {
-      double[] output = new double[input.size()];
-      Arrays.fill(output, value);
-      return new DoubleColumn(output);
+    public Column eval(RecordBatch input, VectorPool pool) {
+      double[] output = pool.getDoubleVector();
+      Arrays.fill(output, 0, input.size(), value);
+      return new DoubleColumn(input.size(), output);
     }
 
     @Override
@@ -52,10 +53,10 @@ public interface VectorizedExpression {
 
   record LiteralString(String value) implements VectorizedExpression {
     @Override
-    public Column eval(RecordBatch input) {
-      String[] output = new String[input.size()];
-      Arrays.fill(output, value);
-      return new StringColumn(output);
+    public Column eval(RecordBatch input, VectorPool pool) {
+      String[] output = pool.getStringVector();
+      Arrays.fill(output, 0, input.size(), value);
+      return new StringColumn(input.size(), output);
     }
 
     @Override
@@ -66,14 +67,14 @@ public interface VectorizedExpression {
 
   record ColumnValue(String name, DataType type) implements VectorizedExpression {
     @Override
-    public Column eval(RecordBatch input) {
+    public Column eval(RecordBatch input, VectorPool pool) {
       OptionalInt columnIndex = ArrayUtil.indexOf(input.attributes(),
               attr -> attr.name().equals(name)
       );
       if (columnIndex.isEmpty()) {
         throw new ColumnNotFoundException(name);
       }
-      return input.columns()[columnIndex.getAsInt()];
+      return input.columns()[columnIndex.getAsInt()].copySlice(0, input.size(), pool);
     }
 
     @Override

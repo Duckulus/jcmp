@@ -25,7 +25,7 @@ public class TPCHHandwritten {
     DoubleArrayList output8 = new DoubleArrayList();
     IntArrayList output9 = new IntArrayList();
 
-    int inputRows = table.getColumn("l_returnflag").length();
+    int inputRows = table.getColumn("l_returnflag").size();
 
     String[] l_returnflag = table.getStringColumnValues("l_returnflag");
     String[] l_linestatus = table.getStringColumnValues("l_linestatus");
@@ -105,16 +105,16 @@ public class TPCHHandwritten {
     };
 
     return new RecordBatch(outputRows, attributes, new Column[]{
-            new StringColumn(output0.toArray(String[]::new)),
-            new StringColumn(output1.toArray(String[]::new)),
-            new DoubleColumn(output2.toDoubleArray()),
-            new DoubleColumn(output3.toDoubleArray()),
-            new DoubleColumn(output4.toDoubleArray()),
-            new DoubleColumn(output5.toDoubleArray()),
-            new DoubleColumn(output6.toDoubleArray()),
-            new DoubleColumn(output7.toDoubleArray()),
-            new DoubleColumn(output8.toDoubleArray()),
-            new IntColumn(output9.toIntArray()),
+            new StringColumn(outputRows, output0.toArray(String[]::new)),
+            new StringColumn(outputRows, output1.toArray(String[]::new)),
+            new DoubleColumn(outputRows, output2.toDoubleArray()),
+            new DoubleColumn(outputRows, output3.toDoubleArray()),
+            new DoubleColumn(outputRows, output4.toDoubleArray()),
+            new DoubleColumn(outputRows, output5.toDoubleArray()),
+            new DoubleColumn(outputRows, output6.toDoubleArray()),
+            new DoubleColumn(outputRows, output7.toDoubleArray()),
+            new DoubleColumn(outputRows, output8.toDoubleArray()),
+            new IntColumn(outputRows, output9.toIntArray()),
     });
   }
 

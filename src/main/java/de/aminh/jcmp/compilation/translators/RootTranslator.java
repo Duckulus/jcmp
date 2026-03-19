@@ -44,7 +44,7 @@ public class RootTranslator implements NodeTranslator {
     String columnsString = Streams.mapWithIndex(Arrays.stream(attributes),
                     (attr, i) -> {
                       assert attr != null;
-                      return "new %sColumn((%s[]) output_%d.%s)".formatted(
+                      return "new %sColumn(output_0.size(), (%s[]) output_%d.%s)".formatted(
                               JavaCodeGen.getCapitalizedTypeName(attr.type()),
                               JavaCodeGen.getTypeName(attr.type()),
                               i,

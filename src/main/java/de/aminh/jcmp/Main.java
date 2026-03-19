@@ -43,7 +43,7 @@ public class Main {
 //    TPCHDataLoader.writeBinaryData(table, "tpch_sf5.bin");
     TPCHTable table = TPCHDataLoader.loadBinaryData(INPUT_FILE);
 
-    PlanNode query = TPCHPlans.q1(table);
+    PlanNode query = TPCHPlans.q6(table);
 
     VectorizedExecutor exec = VectorizedPlanner.plan(query);
     exec.init();

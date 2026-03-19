@@ -15,7 +15,12 @@ public class VectorizedPlanner {
 
 
   public static VectorizedExecutor plan(PlanNode planNode) {
-    return createExecutor(translate(planNode));
+    ExecutionContext ctx = new ExecutionContext();
+    return createExecutor(ctx, translate(planNode));
+  }
+
+  public static VectorizedExecutor plan(ExecutionContext ctx, PlanNode planNode) {
+    return createExecutor(ctx, translate(planNode));
   }
 
   /**
@@ -90,34 +95,34 @@ public class VectorizedPlanner {
     };
   }
 
-  private static VectorizedExecutor createExecutor(VectorizedPlanNode planNode) {
+  private static VectorizedExecutor createExecutor(ExecutionContext ctx, VectorizedPlanNode planNode) {
     switch (planNode) {
       case LimitNode limitNode -> {
-        VectorizedExecutor child = createExecutor(limitNode.child());
-        return new LimitExecutor(limitNode, child);
+        VectorizedExecutor child = createExecutor(ctx, limitNode.child());
+        return new LimitExecutor(ctx, limitNode, child);
       }
       case ProjectionNode projectionNode -> {
-        VectorizedExecutor child = createExecutor(projectionNode.child());
-        return new ProjectionExecutor(projectionNode, child);
+        VectorizedExecutor child = createExecutor(ctx, projectionNode.child());
+        return new ProjectionExecutor(ctx, projectionNode, child);
       }
       case SingleRowNode singleRowNode -> {
         return new SingleRowExecutor(singleRowNode);
       }
       case TableScanNode tableScanNode -> {
-        return new TableScanExecutor(tableScanNode);
+        return new TableScanExecutor(ctx, tableScanNode);
       }
       case SelectionNode selectionNode -> {
-        VectorizedExecutor child = createExecutor(selectionNode.child());
-        return new SelectionExecutor(selectionNode, child);
+        VectorizedExecutor child = createExecutor(ctx, selectionNode.child());
+        return new SelectionExecutor(ctx, selectionNode, child);
       }
       case AggregationNode aggregationNode -> {
-        VectorizedExecutor child = createExecutor(aggregationNode.child());
-        return new HashAggregationExecutor(aggregationNode, child);
+        VectorizedExecutor child = createExecutor(ctx, aggregationNode.child());
+        return new HashAggregationExecutor(ctx, aggregationNode, child);
       }
       case JoinNode joinNode -> {
-        VectorizedExecutor leftChild = createExecutor(joinNode.leftChild());
-        VectorizedExecutor rightChild = createExecutor(joinNode.rightChild());
-        return new HashJoinExecutor(joinNode, leftChild, rightChild);
+        VectorizedExecutor leftChild = createExecutor(ctx, joinNode.leftChild());
+        VectorizedExecutor rightChild = createExecutor(ctx, joinNode.rightChild());
+        return new HashJoinExecutor(ctx, joinNode, leftChild, rightChild);
       }
     }
   }

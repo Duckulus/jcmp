@@ -3,6 +3,7 @@ package de.aminh.jcmp.vectorized.executors;
 import de.aminh.jcmp.data.Column;
 import de.aminh.jcmp.data.Column.IntColumn;
 import de.aminh.jcmp.data.RecordBatch;
+import de.aminh.jcmp.vectorized.ExecutionContext;
 import de.aminh.jcmp.vectorized.VectorizedExecutor;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode;
 import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.SelectionNode;
@@ -13,10 +14,13 @@ import de.aminh.jcmp.vectorized.plan.VectorizedPlanNode.SelectionNode;
  */
 public class SelectionExecutor implements VectorizedExecutor {
 
+  private final ExecutionContext ctx;
+
   private final SelectionNode planNode;
   private final VectorizedExecutor child;
 
-  public SelectionExecutor(SelectionNode planNode, VectorizedExecutor child) {
+  public SelectionExecutor(ExecutionContext ctx, SelectionNode planNode, VectorizedExecutor child) {
+    this.ctx = ctx;
     this.planNode = planNode;
     this.child = child;
   }
@@ -33,20 +37,24 @@ public class SelectionExecutor implements VectorizedExecutor {
       return null;
     }
 
-    int[] mask = ((IntColumn) planNode.predicate().eval(inputBatch)).values();
+    IntColumn maskColumn = (IntColumn) planNode.predicate().eval(inputBatch, ctx.pool());
+    int[] mask = maskColumn.values();
     int matches = 0;
-    for(int i : mask) {
-      matches += i;
+    for(int i = 0; i < maskColumn.size(); i++) {
+      matches += mask[i];
     }
 
     if (matches == 0) {
-      return RecordBatch.empty(inputBatch.attributes());
+      return RecordBatch.empty(inputBatch.attributes(), ctx.pool());
     }
 
     Column[] outputColumns = new Column[inputBatch.columns().length];
     for(int i = 0; i < inputBatch.columns().length; i++) {
-      outputColumns[i] = inputBatch.columns()[i].copyMask(mask, matches);
+      outputColumns[i] = inputBatch.columns()[i].copyMask(mask, matches, ctx.pool());
     }
+
+    maskColumn.release(ctx.pool());
+    inputBatch.release(ctx.pool());
 
     return new RecordBatch(matches, inputBatch.attributes(), outputColumns);
   }

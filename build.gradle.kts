@@ -33,8 +33,8 @@ val timestamp: String = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Date())
 tasks.jmh {
     humanOutputFile = project.layout.buildDirectory.file("reports/jmh/human_${timestamp}.txt").get().asFile
     resultsFile = project.layout.buildDirectory.file("reports/jmh/results_${timestamp}.csv").get().asFile
-//    profilers = listOf("perfnorm:events=power/energy-pkg/")
-    profilers = listOf("gc")
+    profilers = listOf("perfnorm:events=power/energy-pkg/")
+//    profilers = listOf("gc")
 //    profilers = listOf("perfasm")
     resultFormat = "CSV"
 }

@@ -52,15 +52,15 @@ public class TestUtils {
           String colName = String.valueOf((char) ('a' + i));
           switch (columnValues[i]) {
             case int[] intValues -> {
-              columns.put(colName, new Column.IntColumn(intValues));
+              columns.put(colName, new Column.IntColumn(intValues.length, intValues));
               attributes.put(colName, new Attribute(colName, DataType.INT));
             }
             case double[] doubleValues -> {
-              columns.put(colName, new Column.DoubleColumn(doubleValues));
+              columns.put(colName, new Column.DoubleColumn(doubleValues.length, doubleValues));
               attributes.put(colName, new Attribute(colName, DataType.DOUBLE));
             }
             case String[] stringValues -> {
-              columns.put(colName, new Column.StringColumn(stringValues));
+              columns.put(colName, new Column.StringColumn(stringValues.length, stringValues));
               attributes.put(colName, new Attribute(colName, DataType.STRING));
             }
             default -> throw new IllegalArgumentException("Unexpected Type for Column " + columnValues[i]);
