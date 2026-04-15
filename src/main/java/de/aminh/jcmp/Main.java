@@ -1,5 +1,6 @@
 package de.aminh.jcmp;
 
+import de.aminh.jcmp.compilation.JavaQueryCompiler;
 import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
@@ -45,11 +46,12 @@ public class Main {
 
     PlanNode query = TPCHPlans.q6(table);
 
-    VectorizedExecutor exec = VectorizedPlanner.plan(query);
-    exec.init();
-    RecordBatch batch;
-    while ((batch = exec.next()) != null) {
-    }
+    JavaQueryCompiler.compile(table, query);
+//    VectorizedExecutor exec = VectorizedPlanner.plan(query);
+//    exec.init();
+//    RecordBatch batch;
+//    while ((batch = exec.next()) != null) {
+//    }
   }
 
 }

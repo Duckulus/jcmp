@@ -12,17 +12,17 @@ public enum DataType {
 
   public Column createColumn(int size, VectorPool pool) {
     return switch (this) {
-      case INT -> IntColumn.create(size, pool.getIntVector());
-      case DOUBLE -> DoubleColumn.create(size, pool.getDoubleVector());
-      case STRING -> StringColumn.create(size, pool.getStringVector());
+      case INT -> new IntColumn(size, pool.getIntVector());
+      case DOUBLE -> new DoubleColumn(size, pool.getDoubleVector());
+      case STRING -> new StringColumn(size, pool.getStringVector());
     };
   }
 
   public Column createUnmanagedColumn(int size) {
     return switch (this) {
-      case INT -> IntColumn.create(size, new int[size]);
-      case DOUBLE -> DoubleColumn.create(size, new double[size]);
-      case STRING -> StringColumn.create(size, new String[size]);
+      case INT -> new IntColumn(size, new int[size]);
+      case DOUBLE -> new DoubleColumn(size, new double[size]);
+      case STRING -> new StringColumn(size, new String[size]);
     };
   }
 

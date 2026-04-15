@@ -12,21 +12,15 @@ public sealed interface Column {
   int size();
 
   record IntColumn(int size, int[] values) implements Column {
-    public static IntColumn create(int size, int[] values) {
-      return new IntColumn(size, values);
-    }
+
   }
 
   record DoubleColumn(int size, double[] values) implements Column {
-    public static DoubleColumn create(int size, double[] values) {
-      return new DoubleColumn(size, values);
-    }
+
   }
 
   record StringColumn(int size, String[] values) implements Column {
-    public static StringColumn create(int size, String[] values) {
-      return new StringColumn(size, values);
-    }
+
   }
 
   default void parseAndSetValue(int index, String value) {
