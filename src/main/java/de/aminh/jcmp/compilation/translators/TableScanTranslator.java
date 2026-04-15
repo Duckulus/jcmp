@@ -26,12 +26,12 @@ public class TableScanTranslator implements NodeTranslator {
   @Override
   public void produce(TranslationContext ctx) {
     inputRowCountId = ctx.nextId();
-    ctx.prelude().append(
+    ctx.code().append(
             "int inputRowCount_%d = table.getColumn(\"%s\").size();\n".formatted(
                     inputRowCountId, planNode.columnNames().getFirst()
             )
     );
-    ctx.prelude().append("\n");
+    ctx.code().append("\n");
     List<String> columnArrayNames = new ArrayList<>();
     int arr_id = ctx.nextId();
     for (String columnName : planNode.columnNames()) {
@@ -41,7 +41,7 @@ public class TableScanTranslator implements NodeTranslator {
       columnArrayNames.add(columnArrayName);
       String attributeName = attribute.name();
       String capitalizedTypeName = JavaCodeGen.getCapitalizedTypeName(attribute.type());
-      ctx.prelude().append(
+      ctx.code().append(
               "%s[] %s = table.get%sColumnValues(\"%s\");\n".formatted(
                       typeName, columnArrayName, capitalizedTypeName, attributeName
               )

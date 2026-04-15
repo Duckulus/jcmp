@@ -26,8 +26,9 @@ public class LimitTranslator implements NodeTranslator {
   @Override
   public void produce(TranslationContext ctx) {
     limitId = ctx.nextId();
+    ctx.code().append("int limit_%d = 0;\n".formatted(limitId));
+
     input.produce(ctx);
-    ctx.prelude().append("int limit_%d = 0;\n".formatted(limitId));
   }
 
   @Override

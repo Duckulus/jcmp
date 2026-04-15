@@ -69,10 +69,10 @@ public class HashJoinTranslator implements NodeTranslator {
               assert exp != null;
               return new Attribute("key_" + i, exp.type());
             }).toList();
-    ctx.prelude().append(JavaCodeGen.generateDataClass(keyClass(), leftKeyAttrs));
-    ctx.prelude().append(JavaCodeGen.generateDataClass(leftTupleClass(), Arrays.asList(leftSchema)));
-    ctx.prelude().append("Map<%s, List<%s>> %s = new HashMap<>();\n".formatted(keyClass(), leftTupleClass(), mapVar()));
-    ctx.prelude().append("%s %s = new %s();\n".formatted(keyClass(), rightKeyVar(), keyClass()));
+    ctx.code().append(JavaCodeGen.generateDataClass(keyClass(), leftKeyAttrs));
+    ctx.code().append(JavaCodeGen.generateDataClass(leftTupleClass(), Arrays.asList(leftSchema)));
+    ctx.code().append("Map<%s, List<%s>> %s = new HashMap<>();\n".formatted(keyClass(), leftTupleClass(), mapVar()));
+    ctx.code().append("%s %s = new %s();\n".formatted(keyClass(), rightKeyVar(), keyClass()));
 
     leftInput.produce(ctx);
     rightInput.produce(ctx);

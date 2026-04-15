@@ -47,8 +47,7 @@ public class JavaQueryCompiler {
               @Override
               public RecordBatch execute(Table table) {
             """.formatted(className) +
-            ctx.prelude() + "\n"
-            + ctx.code() +
+             ctx.code() +
             """
                       }
                     }

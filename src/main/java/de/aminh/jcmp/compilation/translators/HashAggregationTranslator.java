@@ -60,8 +60,8 @@ public class HashAggregationTranslator implements NodeTranslator {
 
     String classDefinition = JavaCodeGen.generateDataClass(compoundKeyClass(), keyNames, keyTypes);
 
-    ctx.prelude().append(classDefinition);
-    ctx.prelude().append("""
+    ctx.code().append(classDefinition);
+    ctx.code().append("""
         %s %s = new %s();
         """.formatted(compoundKeyClass(), lookupKeyVar(), compoundKeyClass()));
 
@@ -71,21 +71,21 @@ public class HashAggregationTranslator implements NodeTranslator {
               return "%s agg%d;".formatted(JavaCodeGen.getTypeName(agg.outputType()), i);
             }
     ).collect(Collectors.joining("\n  "));
-    ctx.prelude().append("""
+    ctx.code().append("""
             class %s {
               int count;
               %s
             }
             
             """.formatted(stateClass(), aggregateAttributes));
-    ctx.prelude().append("%s %s = null;\n".formatted(stateClass(), lastStateVar()));
+    ctx.code().append("%s %s = null;\n".formatted(stateClass(), lastStateVar()));
     for (String key : planNode.keys()) {
       DataType type = ctx.table().getAttribute(key).type();
-      ctx.prelude().append("%s last_%s_%d = %s;\n".formatted(JavaCodeGen.getTypeName(type), key, aggregationId, JavaCodeGen.getNullValue(type)));
+      ctx.code().append("%s last_%s_%d = %s;\n".formatted(JavaCodeGen.getTypeName(type), key, aggregationId, JavaCodeGen.getNullValue(type)));
     }
 
-    ctx.prelude().append("Map<%s, %s> %s = new HashMap<>();\n".formatted(compoundKeyClass(), stateClass(), mapVar()));
-    ctx.prelude().append("\n");
+    ctx.code().append("Map<%s, %s> %s = new HashMap<>();\n".formatted(compoundKeyClass(), stateClass(), mapVar()));
+    ctx.code().append("\n");
 
     input.produce(ctx);
 

@@ -10,7 +10,6 @@ public class TranslationContext {
 
   private final Table table;
 
-  private final StringBuilder prelude;
   private final StringBuilder code;
 
   private final Map<String, String> symbolTable = new HashMap<>();
@@ -19,12 +18,7 @@ public class TranslationContext {
 
   public TranslationContext(Table table) {
     this.table = table;
-    this.prelude = new StringBuilder();
     this.code = new StringBuilder();
-  }
-
-  public StringBuilder prelude() {
-    return prelude;
   }
 
   public StringBuilder code() {
