@@ -2,9 +2,12 @@ package de.aminh.jcmp;
 
 import de.aminh.jcmp.compilation.CompiledQuery;
 import de.aminh.jcmp.compilation.JavaQueryCompiler;
+import de.aminh.jcmp.data.RecordBatch;
 import de.aminh.jcmp.data.tpch.TPCHDataLoader;
 import de.aminh.jcmp.data.tpch.TPCHTable;
 import de.aminh.jcmp.plan.PlanNode;
+import de.aminh.jcmp.vectorized.VectorizedExecutor;
+import de.aminh.jcmp.vectorized.VectorizedPlanner;
 
 import java.util.Set;
 
@@ -38,19 +41,13 @@ public class Main {
 
   static void main() {
     System.setProperty("jcmp.debug.codegen", "true");
-//    TPCHTable table = TPCHDataLoader.loadCsvData();
-//    TPCHDataLoader.writeBinaryData(table, "tpch_sf5.bin");
+
     TPCHTable table = TPCHDataLoader.loadBinaryData(INPUT_FILE);
 
-    PlanNode query = TPCHPlans.q5(table);
+    PlanNode query = TPCHPlans.q6(table);
 
     CompiledQuery c = JavaQueryCompiler.compile(table, query);
     System.out.println(c.execute(table));
-//    VectorizedExecutor exec = VectorizedPlanner.plan(query);
-//    exec.init();
-//    RecordBatch batch;
-//    while ((batch = exec.next()) != null) {
-//    }
   }
 
 }

@@ -10,9 +10,9 @@ public class VectorPool {
   private final double[][] doubleVectors = new double[MAX_VECTORS][];
   private final String[][] stringVectors = new String[MAX_VECTORS][];
 
-  private int topInt;
-  private int topDouble;
-  private int topString;
+  private int topInt = 0;
+  private int topDouble = 0;
+  private int topString = 0;
 
   public int[] getIntVector() {
     if(topInt == 0) {

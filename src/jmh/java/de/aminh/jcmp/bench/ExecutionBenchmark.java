@@ -18,12 +18,19 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-@Fork(1)
-@Warmup(iterations = 3, time = 2)
-@Measurement(iterations = 5, time = 2)
+@Fork(3)
+@Warmup(iterations = 5, time = 5)
+@Measurement(iterations = 10, time = 5)
+//@BenchmarkMode(Mode.SingleShotTime)
+//@OutputTimeUnit(TimeUnit.MILLISECONDS)
+//@State(Scope.Benchmark)
+//@Fork(30)
+//@Warmup(iterations = 0)
+//@Measurement(iterations = 1)
 public class ExecutionBenchmark {
 
-  @Param({"Q1", "Q5", "Q6"})
+//  @Param({"Q1", "Q5", "Q6"})
+  @Param({"Q5"})
   private String tpchQuery;
 
   private Table tpcTable;
@@ -44,30 +51,30 @@ public class ExecutionBenchmark {
     preCompiledQuery = JavaQueryCompiler.compile(tpcTable, node);
   }
 
-  @Benchmark
-  public void measureVectorizedExec(Blackhole bh) {
-    VectorizedExecutor executor = VectorizedPlanner.plan(node);
-    executor.init();
-    RecordBatch batch;
-    while ((batch = executor.next()) != null) {
-      bh.consume(batch);
-    }
-  }
+//  @Benchmark
+//  public void measureVectorizedExec(Blackhole bh) {
+//    VectorizedExecutor executor = VectorizedPlanner.plan(node);
+//    executor.init();
+//    RecordBatch batch;
+//    while ((batch = executor.next()) != null) {
+//      bh.consume(batch);
+//    }
+//  }
 
   @Benchmark
   public void measureCompiledExec(Blackhole bh) {
     bh.consume(preCompiledQuery.execute(tpcTable));
   }
-
-  @Benchmark
-  public void measureCompilation(Blackhole bh) {
-    bh.consume(JavaQueryCompiler.compile(tpcTable, node));
-  }
-
-  @Benchmark
-  public void measureCompiledEndToEnd(Blackhole bh) {
-    CompiledQuery query = JavaQueryCompiler.compile(tpcTable, node);
-    bh.consume(query.execute(tpcTable));
-  }
-
+//
+//  @Benchmark
+//  public void measureCompilation(Blackhole bh) {
+//    bh.consume(JavaQueryCompiler.compile(tpcTable, node));
+//  }
+//
+//  @Benchmark
+//  public void measureCompiledEndToEnd(Blackhole bh) {
+//    CompiledQuery query = JavaQueryCompiler.compile(tpcTable, node);
+//    bh.consume(query.execute(tpcTable));
+//  }
+//
 }

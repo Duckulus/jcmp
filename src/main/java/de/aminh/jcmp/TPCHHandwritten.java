@@ -60,8 +60,6 @@ public class TPCHHandwritten {
       }
     }
 
-
-
     var entries = aggregationMap.entrySet();
     var outputRows = entries.size();
 

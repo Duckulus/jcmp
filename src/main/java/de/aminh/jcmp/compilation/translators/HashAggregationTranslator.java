@@ -1,6 +1,7 @@
 package de.aminh.jcmp.compilation.translators;
 
 import com.google.common.collect.Streams;
+import de.aminh.jcmp.Configuration;
 import de.aminh.jcmp.compilation.JavaCodeGen;
 import de.aminh.jcmp.compilation.NodeTranslator;
 import de.aminh.jcmp.compilation.TranslationContext;
@@ -160,13 +161,18 @@ public class HashAggregationTranslator implements NodeTranslator {
                 fastPathCondition.append("%s.equals(last_%s_%d)".formatted(keyValues.get(i), keyName, aggregationId));
       }
     }
-    ctx.code().append("""
+    if (Configuration.USE_AGGREGATION_FAST_PATH) {
+      ctx.code().append("""
             if (%s) {
               %s
             } else {
               %s
             }
             """.formatted(fastPathCondition, fastPath, slowPath));
+    } else {
+      ctx.code().append(slowPath);
+    }
+
 
     ctx.code().append("state.count++;\n");
     for (int i = 0; i < planNode.aggregates().size(); i++) {
